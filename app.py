@@ -5,7 +5,7 @@ from sqlite3 import Error
 from flask_bcrypt import Bcrypt
 import os
 
-#define
+# define some important stuff
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 app.secret_key = "ueuywq9571"
