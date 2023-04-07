@@ -3,7 +3,7 @@
 {% block main %}
 <form method="post">
     <h5>User Name</h5>
-    <input type="text" name="user_name" id="user_name" required minlength="2" maxlength="45" pattern="^[a-zA-Z0-9]+$" title="No special Characters">
+    <input type="text" name="user_name" id="user_name" required minlength="2" maxlength="45" pattern="{{ user_name_regex }}" title="No special Characters">
     <br>
     <h5>Email Address</h5>
     <input type="email" placeholder="example@example.com" name="email_address" id="email_address" required maxlength="60">
@@ -13,7 +13,7 @@
     <input type="radio" name="qualification" id="teacher" value="2" required>
     <br>
     <h5>Password</h5>
-    <input type="password" placeholder="Min of 8 characters" id="password1" name="password1" minlength="{{ min_password }}" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" title="Minimum eight characters, at least one letter, one number and one special character">
+    <input type="password" placeholder="Min of 8 characters" id="password1" name="password1" minlength="{{ min_password }}" required pattern="{{ password_regex }}" title="At least one uppercase, one lowercase, and one digit">
     <br>
     <h5>Enter Password again</h5>
     <input type="password" id="password2" name="password2" minlength="{{ min_password }}" required>
