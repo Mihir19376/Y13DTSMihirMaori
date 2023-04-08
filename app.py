@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 import os
 
 # define some important stuff
+DATABASE = "maoridictionary.db"
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 app.secret_key = "ueuywq9571"
@@ -13,6 +14,15 @@ app.secret_key = "ueuywq9571"
 MIN_PASSWORD_LENGTH = 8
 PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"
 USER_NAME_REGEX_REQUIREMENTS = "^[a-zA-Z0-9]+$"
+
+
+def open_database(db_name):
+    try:
+        connection = sqlite3.connect(db_name)
+        return connection
+    except Error as e:
+        print(e)
+    return None
 
 @app.route('/')
 def render_home():  # put application's code here
@@ -38,6 +48,20 @@ def render_signup():
 
         hashed_password = bcrypt.generate_password_hash(password1)
         print(user_name, email, password1, user_type, hashed_password)
+
+        con = open_database(DATABASE)
+        query = "INSERT INTO users (name, email, password, user_type) VALUES (?, ?, ?, ?)"
+        cur = con.cursor()
+
+        try:
+            cur.execute(query, (user_name, email, hashed_password, user_type))
+        except sqlite3.IntegrityError:
+            con.close()
+            return redirect('/signup?error=Email+is+already+used')
+        con.commit()
+        con.close()
+
+        return redirect('/')
 
     return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS, user_name_regex=USER_NAME_REGEX_REQUIREMENTS)
 
