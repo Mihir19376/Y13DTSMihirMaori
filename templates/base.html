@@ -23,6 +23,8 @@
 	<div class="container">
 		<nav>
 			<a href="/"><button type="button" style="float: left;">Home</button></a>
+
+            {% if logged_in[0] %}
 			<div class="dropdown" style="width: fit-content; float: left;">
 				<div class="dropdown-btn">
 					<button style="float: left;" class="categories-button">Categories</button>
@@ -33,10 +35,20 @@
 					</div>
 				</div>
 			</div>
+            {% endif %}
+
+            {% if logged_in[0] %}
+            <a href="/logout"><button type="button" style="float: right;">Logout</button></a>
+                {% if logged_in[1] %}
+                    <a href="/admin"><button type="button" style="float: right;">Admin</button></a>
+                {% endif %}
+                <div class="input-container" style="float: right;">
+				    <input type="search" placeholder="Search..." style="float: right;">
+			    </div>
+            {% else %}
             <a href="/signup"><button type="button" style="float: right;">Signup</button></a>
-            <div class="input-container" style="float: right;">
-				<input type="search" placeholder="Search..." style="float: right;">
-			</div>
+            <a href="/login"><button type="button" style="float: right;">Login</button></a>
+            {% endif %}
 		</nav>
 	</div>
 	<main>

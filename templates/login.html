@@ -1,4 +1,14 @@
 {% extends 'base.html' %}
 
 {% block main %}
+<form method="post">
+<h5>Email Address</h5>
+<input type="email" placeholder="example@example.com" name="email_address" id="email_address" required>
+<br>
+<h5>Password</h5>
+<input type="password" id="password" name="password" minlength="{{ min_password }}" required>
+<br>
+<div class="error">{{ error }}</div>
+<input type="submit" style="color: var(--fontcolour)">
+</form>
 {% endblock %}
