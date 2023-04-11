@@ -4,16 +4,20 @@ import sqlite3
 from sqlite3 import Error
 from flask_bcrypt import Bcrypt
 import os
+from datetime import datetime
 
 # define some important stuff
 DATABASE = "maoridictionary.db"
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 app.secret_key = "ueuywq9571"
+upload = 'static/images'
+app.config['UPLOAD'] = upload
 
 MIN_PASSWORD_LENGTH = 8
 PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"
 USER_NAME_REGEX_REQUIREMENTS = "^[a-zA-Z0-9]+$"
+LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
 def is_logged_in_as_teacher():
@@ -25,9 +29,10 @@ def is_logged_in_as_teacher():
             print("logged in")
             # logged in is true, and as teacher is true
             return [True, True]
-        elif session.get("user_type") == 1 :
+        elif session.get("user_type") == 1:
             # logged in is true, but as teacher is false
             return [True, False]
+
 
 def open_database(db_name):
     try:
@@ -37,9 +42,11 @@ def open_database(db_name):
         print(e)
     return None
 
+
 @app.route('/')
 def render_home():  # put application's code here
     return render_template('home.html', logged_in=is_logged_in_as_teacher())
+
 
 @app.route('/categories/words-category')
 def render_words_list():
@@ -80,7 +87,9 @@ def render_signup():
 
         return redirect('/login')
 
-    return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS, user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=is_logged_in_as_teacher())
+    return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS,
+                           user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=is_logged_in_as_teacher())
+
 
 @app.route('/login', methods=["POST", "GET"])
 def render_login():
@@ -119,8 +128,8 @@ def render_login():
 
         return redirect('/')
 
-
     return render_template('login.html', logged_in=is_logged_in_as_teacher())
+
 
 @app.route('/logout')
 def logout():
@@ -129,12 +138,57 @@ def logout():
     print(list(session.keys()))
     return redirect('/?message=See+you+nest+time!')
 
+
 @app.route('/admin')
 def admin():
     if not is_logged_in_as_teacher()[1]:
         return redirect('/?message=Need+to+be+logged+in+as+teacher')
 
-    return render_template('admin.html', logged_in=is_logged_in_as_teacher())
+    # fetch all the categories from the database and add them to a list
+    con = open_database(DATABASE)
+    query = "SELECT * FROM categories ORDER BY category asc"
+    cur = con.cursor()
+    cur.execute(query)
+    categories = cur.fetchall()
+    con.close()
+
+    return render_template('admin.html', logged_in=is_logged_in_as_teacher(), levels=LEVELS, categories=categories)
+
+
+@app.route('/add-word', methods=['POST', 'GET'])
+def add_word():
+    if not is_logged_in_as_teacher()[1]:
+        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+    if request.method == 'POST':
+        print(request.form)
+        maori_word = request.form.get('maori_word') #
+        english_word = request.form.get('english_word') #
+        definition = request.form.get('definition') #
+        year_level = request.form.get('level_id') #
+        category = request.form.get('cat_id')
+        category = category.split(", ")
+        category_id = category[0] #
+        file = request.files['image_file']
+        image_src = secure_filename(file.filename) #
+        file.save(os.path.join(app.config['UPLOAD'], image_src))
+        # CHECK IF THE FILE ALREADY EXITS AND DON'T LET THE FORM WORK IF IT DOES
+        author = session.get("user_id")
+        time_of_entry = datetime.now()
+
+        con = open_database(DATABASE)
+        query = "INSERT INTO words (maori_name, english_name, definition, img_src, last_edit_time, author_of_entry, year_level, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        cur = con.cursor()
+
+        try:
+            cur.execute(query, (maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
+        except sqlite3.IntegrityError:
+            con.close()
+            return redirect('/signup?error=word+is+already+used')
+        con.commit()
+        con.close()
+
+        return redirect('/admin')
+
 
 @app.route('/categories/words-category/word')
 def render_word():
@@ -142,10 +196,12 @@ def render_word():
         return redirect('/?message=Need+to+be+logged+in')
     return render_template('word.html', logged_in=is_logged_in_as_teacher())
 
+
 @app.errorhandler(404)
 def page_not_found(e):
     print(e)
     return render_template('404Error.html', logged_in=is_logged_in_as_teacher()), 404
+
 
 if __name__ == '__main__':
     app.run()
