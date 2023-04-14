@@ -2,13 +2,22 @@
 
 {% block main %}
 <div class="image">
-    <img src="/static/images/maori.jpg" alt="turtle image">
+    {% for info in word_list %}
+        <img src="/static/images/{{ info[3] }}" alt="turtle image">
+    {% endfor %}
+
 </div>
 
 <div class="container">
-    <h1>Word (In Maori)</h1>
-    <h3>Name (In English)</h3>
-    <p>Details</p>
+    {% for info in word_list %}
+    <h1>Maori Word: {{ info[0] }}</h1>
+    <h3>English Translation: {{ info[1] }}</h3>
+    <p>Definition: {{ info[2] }}</p>
+    <p>Last Edit Time: {{ info[4] }}</p>
+    <p>Author of Entry: {{ info[5] }}</p>
+    <p>Year Level: {{ info[6] }}</p>
+    <p>Category: {{ info[7] }}</p>
+    {% endfor %}
 </div>
 
 

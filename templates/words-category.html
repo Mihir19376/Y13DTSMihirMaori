@@ -2,95 +2,18 @@
 
 {% block main %}
 <div class="grid-container">
+    {% for word in words %}
     <div class="container">
+    <a href="/categories/{{ word[4] }}/{{ word[0] }}">
         <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
+            <img src="/static/images/{{ word[3] }}" alt="Not Yet">
+            <h5>{{ word[0] }}</h5>
+            <h5>{{ word[1] }}</h5>
+            <h5>{{ word[2] }}</h5>
         </div>
+    </a>
     </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
-    <div class="container">
-        <div class="content-box">
-            <img src="/static/images/maori.jpg" alt="Not Yet">
-            <p>Nothing Yet</p>
-        </div>
-    </div>
+    {% endfor %}
+
 </div>
 {% endblock %}

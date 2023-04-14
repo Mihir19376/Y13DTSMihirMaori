@@ -29,9 +29,12 @@
 				<div class="dropdown-btn">
 					<button style="float: left;" class="categories-button">Categories</button>
 					<div class="dropdown-content">
-						<a href="/categories/words-category">Category 1</a>
-						<a href="#">Category 2</a>
-						<a href="#">Category 3</a>
+                        {% for category in category_list %}
+                        <a href="/categories/{{ category[0] }}">{{ category[1] }}</a>
+                        {% endfor %}
+{#						<a href="/categories/words-category">Category 1</a>#}
+{#						<a href="#">Category 2</a>#}
+{#						<a href="#">Category 3</a>#}
 					</div>
 				</div>
 			</div>

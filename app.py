@@ -20,6 +20,17 @@ USER_NAME_REGEX_REQUIREMENTS = "^[a-zA-Z0-9]+$"
 LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
+def get_all_categories():
+    query = "SELECT id, category FROM categories"
+    con = open_database(DATABASE)
+    cur = con.cursor()
+    cur.execute(query)
+    category_list = cur.fetchall()
+    # category_list = [category[0] for category in category_list]
+    con.close()
+    return category_list
+
+
 def is_logged_in_as_teacher():
     if session.get("email") is None:
         print("not logged in")
@@ -45,14 +56,7 @@ def open_database(db_name):
 
 @app.route('/')
 def render_home():  # put application's code here
-    return render_template('home.html', logged_in=is_logged_in_as_teacher())
-
-
-@app.route('/categories/words-category')
-def render_words_list():
-    if not is_logged_in_as_teacher()[0]:
-        return redirect('/?message=need+to+be+logged+in')
-    return render_template('words-category.html', logged_in=is_logged_in_as_teacher())
+    return render_template('home.html', logged_in=is_logged_in_as_teacher(), category_list=get_all_categories())
 
 
 @app.route('/signup', methods=['POST', 'GET'])
@@ -88,7 +92,7 @@ def render_signup():
         return redirect('/login')
 
     return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS,
-                           user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=is_logged_in_as_teacher())
+                           user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=is_logged_in_as_teacher(), category_list=get_all_categories())
 
 
 @app.route('/login', methods=["POST", "GET"])
@@ -128,7 +132,7 @@ def render_login():
 
         return redirect('/')
 
-    return render_template('login.html', logged_in=is_logged_in_as_teacher())
+    return render_template('login.html', logged_in=is_logged_in_as_teacher(), category_list=get_all_categories())
 
 
 @app.route('/logout')
@@ -152,7 +156,7 @@ def admin():
     categories = cur.fetchall()
     con.close()
 
-    return render_template('admin.html', logged_in=is_logged_in_as_teacher(), levels=LEVELS, categories=categories)
+    return render_template('admin.html', logged_in=is_logged_in_as_teacher(), levels=LEVELS, categories=categories, category_list=get_all_categories())
 
 
 @app.route('/add-word', methods=['POST', 'GET'])
@@ -161,15 +165,15 @@ def add_word():
         return redirect('/?message=Need+to+be+logged+in+as+teacher')
     if request.method == 'POST':
         print(request.form)
-        maori_word = request.form.get('maori_word') #
-        english_word = request.form.get('english_word') #
-        definition = request.form.get('definition') #
-        year_level = request.form.get('level_id') #
+        maori_word = request.form.get('maori_word')  #
+        english_word = request.form.get('english_word')  #
+        definition = request.form.get('definition')  #
+        year_level = request.form.get('level_id')  #
         category = request.form.get('cat_id')
         category = category.split(", ")
-        category_id = category[0] #
+        category_id = category[0]  #
         file = request.files['image_file']
-        image_src = secure_filename(file.filename) #
+        image_src = secure_filename(file.filename)  #
         file.save(os.path.join(app.config['UPLOAD'], image_src))
         # CHECK IF THE FILE ALREADY EXITS AND DON'T LET THE FORM WORK IF IT DOES
         author = session.get("user_id")
@@ -180,7 +184,8 @@ def add_word():
         cur = con.cursor()
 
         try:
-            cur.execute(query, (maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
+            cur.execute(query, (
+            maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
         except sqlite3.IntegrityError:
             con.close()
             return redirect('/signup?error=word+is+already+used')
@@ -190,11 +195,34 @@ def add_word():
         return redirect('/admin')
 
 
-@app.route('/categories/words-category/word')
-def render_word():
+@app.route('/categories/<category>/<word>')
+def render_word(category, word):
     if not is_logged_in_as_teacher()[0]:
         return redirect('/?message=Need+to+be+logged+in')
-    return render_template('word.html', logged_in=is_logged_in_as_teacher())
+    query = "SELECT words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category FROM words INNER JOIN users ON words.author_of_entry=users.id WHERE maori_name = ?"
+    con = open_database(DATABASE)
+    cur = con.cursor()
+    cur.execute(query, (word,))
+    word_list = cur.fetchall()
+    print(word_list)
+    con.close()
+    if not bool(word_list):
+        return redirect('/?message=word+doesnt+exist')
+    return render_template('word.html', logged_in=is_logged_in_as_teacher(), category_list=get_all_categories(), word_list=word_list)
+
+
+@app.route('/categories/<category>/')
+def render_category(category):
+    if not is_logged_in_as_teacher()[0]:
+        return redirect('/?message=Need+to+be+logged+in')
+    query = "SELECT maori_name, english_name, definition, img_src, category FROM words where category = ?"
+    con = open_database(DATABASE)
+    cur = con.cursor()
+    cur.execute(query, (category,))
+    words_list = cur.fetchall()
+    print(words_list)
+    con.close()
+    return render_template('words-category.html', logged_in=is_logged_in_as_teacher(), words=words_list, category_list=get_all_categories())
 
 
 @app.errorhandler(404)
