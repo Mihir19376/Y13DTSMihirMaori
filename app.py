@@ -158,6 +158,35 @@ def admin():
 
     return render_template('admin.html', logged_in=is_logged_in_as_teacher(), levels=LEVELS, categories=categories, category_list=get_all_categories())
 
+@app.route('/delete-category', methods=['POST', 'GET'])
+def delete_category():
+    if not is_logged_in_as_teacher()[1]:
+        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+    category_to_delete = request.form.get('cat_id')
+    # delete the image
+    query = "SELECT img_src FROM words WHERE category = ?"
+    con = open_database(DATABASE)
+    cur = con.cursor()
+    cur.execute(query, (category_to_delete, ))
+    category_word_datas = cur.fetchall()
+    for word_data in category_word_datas:
+        os.remove(f'static/images/{word_data[0]}')
+    # delete words in that category
+    query = "DELETE FROM words WHERE category = ?"
+    con = open_database(DATABASE)
+    cur = con.cursor()
+    cur.execute(query, (category_to_delete, ))
+    con.commit()
+    # delete the category itself
+    query = "DELETE FROM categories WHERE id = ?"
+    con = open_database(DATABASE)
+    cur = con.cursor()
+    cur.execute(query, (category_to_delete,))
+    con.commit()
+
+    con.close()
+    return redirect('/admin')
+
 @app.route('/add-category', methods=['POST', 'GET'])
 def add_category():
     if not is_logged_in_as_teacher()[1]:
@@ -172,7 +201,7 @@ def add_category():
             cur.execute(query, (category_name, ))
         except sqlite3.IntegrityError:
             con.close()
-            return redirect('/signup?category+already+exists')
+            return redirect('/admin?message=category+already+exists')
         con.commit()
         con.close()
 
@@ -218,10 +247,11 @@ def add_word():
 def render_word(category, word):
     if not is_logged_in_as_teacher()[0]:
         return redirect('/?message=Need+to+be+logged+in')
-    query = "SELECT words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category FROM words INNER JOIN users ON words.author_of_entry=users.id WHERE maori_name = ?"
+    query = "SELECT words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category FROM words INNER JOIN users ON words.author_of_entry=users.id WHERE maori_name = ? AND category = ?"
+    # query = "SELECT words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, categories.category FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON words.category=categories.id WHERE maori_name = ? AND category = ?"
     con = open_database(DATABASE)
     cur = con.cursor()
-    cur.execute(query, (word,))
+    cur.execute(query, (word, category, ))
     word_list = cur.fetchall()
     print(word_list)
     con.close()

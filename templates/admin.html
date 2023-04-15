@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block main %}
-<div>
+<div class="admin-main">
 <h1>Add Word</h1>
 <form method="post" action="/add-word" enctype="multipart/form-data">
     <h5>Maori Word</h5>
@@ -30,21 +30,31 @@
         {% endfor %}
     </select>
     <div class="error">{{ error }}</div>
-    <input type="submit" style="color: var(--fontcolour)">
+    <input type="submit" value="Add" style="color: var(--fontcolour)">
 </form>
-</div>
 
 
-<div>
     <h1>Add Category</h1>
     <form method="post" action="/add-category">
         <h5>Category Name</h5>
         <input type="text" name="category_name" id="category_name" required minlength="2" maxlength="45">
         <br>
         <div class="error">{{ error }}</div>
-        <input type="submit" style="color: var(--fontcolour)">
+        <input type="submit" value="Add" style="color: var(--fontcolour)">
+    </form>
+
+    <h1>Delete Category</h1>
+    <form method="post" action="/delete-category" onsubmit="return confirm('Do you really want to delete this category?');">
+        <h5>Category Name</h5>
+        <select id="cat_id" name="cat_id" required>
+            {% for category in categories %}
+            <option value="{{ category[0] }}">{{ category[1] }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <div class="error">{{ error }}</div>
+        <input type="submit" value="Delete" style="color: var(--fontcolour)">
     </form>
 </div>
-
 
 {% endblock %}
