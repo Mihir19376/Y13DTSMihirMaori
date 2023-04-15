@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 
 {% block main %}
-    <h1>Add Word</h1>
+<div>
+<h1>Add Word</h1>
 <form method="post" action="/add-word" enctype="multipart/form-data">
     <h5>Maori Word</h5>
     <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="89">
@@ -31,15 +32,19 @@
     <div class="error">{{ error }}</div>
     <input type="submit" style="color: var(--fontcolour)">
 </form>
+</div>
 
 
+<div>
     <h1>Add Category</h1>
-<form method="post" action="/add-category">
-    <h5>Maori Word</h5>
-    <input type="text" name="category_name" id="category_name" required minlength="2" maxlength="45">
-    <br>
-    <div class="error">{{ error }}</div>
-    <input type="submit" style="color: var(--fontcolour)">
-</form>
+    <form method="post" action="/add-category">
+        <h5>Category Name</h5>
+        <input type="text" name="category_name" id="category_name" required minlength="2" maxlength="45">
+        <br>
+        <div class="error">{{ error }}</div>
+        <input type="submit" style="color: var(--fontcolour)">
+    </form>
+</div>
+
 
 {% endblock %}

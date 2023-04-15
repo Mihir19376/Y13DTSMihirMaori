@@ -235,6 +235,8 @@ img{
 
 main{
     position: relative;
+    display: flex;
+    justify-content: center;
 }
 
 input[type='submit']{
@@ -253,15 +255,17 @@ input[type='submit']{
 }
 
 form{
+
     background-color: var(--backcolour);
     width: 350px;
-    position: absolute;
-    transform: translate(-50%, -50%);
+    position: page;
+    transform: translate(0%, -0%);
     top: 50%;
     left: 50%;
     box-shadow: 10px 10px 10px -1px var(--shadowcolour),
                 -10px -10px 10px -1px var(--maincolour);
     padding: 40px 20px;
+    margin: 20px;
     border-radius: 30px;
 }
 

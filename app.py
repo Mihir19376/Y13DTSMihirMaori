@@ -158,6 +158,25 @@ def admin():
 
     return render_template('admin.html', logged_in=is_logged_in_as_teacher(), levels=LEVELS, categories=categories, category_list=get_all_categories())
 
+@app.route('/add-category', methods=['POST', 'GET'])
+def add_category():
+    if not is_logged_in_as_teacher()[1]:
+        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+    if request.method == 'POST':
+        print(request.form)
+        category_name = request.form.get('category_name')
+        con = open_database(DATABASE)
+        query = "INSERT INTO categories (category) VALUES (?)"
+        cur = con.cursor()
+        try:
+            cur.execute(query, (category_name, ))
+        except sqlite3.IntegrityError:
+            con.close()
+            return redirect('/signup?category+already+exists')
+        con.commit()
+        con.close()
+
+        return redirect('/admin')
 
 @app.route('/add-word', methods=['POST', 'GET'])
 def add_word():
