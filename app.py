@@ -54,6 +54,39 @@ def open_database(db_name):
     return None
 
 
+@app.route('/edit-word', methods=['POST', 'POST'])
+def monkey():
+    if request.method == 'POST':
+        print(request.form)
+        con = open_database(DATABASE)
+        cur = con.cursor()
+        word_id = request.form.get('id')
+        print(id)
+        maori_word = request.form.get('maori_word')  #
+        english_word = request.form.get('english_word')  #
+        definition = request.form.get('definition')  #
+        year_level = request.form.get('level_id')  #
+        category = request.form.get('cat_id')
+        author = session.get("user_id") #
+        time_of_entry = datetime.now() #
+        file = request.files['image_file']
+        image_src = secure_filename(file.filename)  #
+
+        query = "UPDATE words SET maori_name = ?, english_name = ?, definition = ?, last_edit_time = ?, author_of_entry = ?, year_level = ?, category = ? WHERE id = ?"
+        cur.execute(query, (maori_word, english_word, definition, time_of_entry, author, year_level, category, word_id, ))
+        con.commit()
+        if image_src == "":
+            con.close()
+            return redirect('/')
+        else:
+            print(image_src)
+            file.save(os.path.join(app.config['UPLOAD'], image_src))
+            query = "UPDATE words SET img_src = ? WHERE id = ?"
+            cur.execute(query, (image_src, word_id, ))
+            con.commit()
+            con.close()
+            return redirect('/')
+
 @app.route('/')
 def render_home():  # put application's code here
     return render_template('home.html', logged_in=is_logged_in_as_teacher(), category_list=get_all_categories())
@@ -92,7 +125,8 @@ def render_signup():
         return redirect('/login')
 
     return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS,
-                           user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=is_logged_in_as_teacher(), category_list=get_all_categories())
+                           user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=is_logged_in_as_teacher(),
+                           category_list=get_all_categories())
 
 
 @app.route('/login', methods=["POST", "GET"])
@@ -156,7 +190,9 @@ def admin():
     categories = cur.fetchall()
     con.close()
 
-    return render_template('admin.html', logged_in=is_logged_in_as_teacher(), levels=LEVELS, categories=categories, category_list=get_all_categories())
+    return render_template('admin.html', logged_in=is_logged_in_as_teacher(), levels=LEVELS, categories=categories,
+                           category_list=get_all_categories())
+
 
 @app.route('/delete-category', methods=['POST', 'GET'])
 def delete_category():
@@ -167,7 +203,7 @@ def delete_category():
     query = "SELECT img_src FROM words WHERE category = ?"
     con = open_database(DATABASE)
     cur = con.cursor()
-    cur.execute(query, (category_to_delete, ))
+    cur.execute(query, (category_to_delete,))
     category_word_datas = cur.fetchall()
     for word_data in category_word_datas:
         os.remove(f'static/images/{word_data[0]}')
@@ -175,7 +211,7 @@ def delete_category():
     query = "DELETE FROM words WHERE category = ?"
     con = open_database(DATABASE)
     cur = con.cursor()
-    cur.execute(query, (category_to_delete, ))
+    cur.execute(query, (category_to_delete,))
     con.commit()
     # delete the category itself
     query = "DELETE FROM categories WHERE id = ?"
@@ -186,6 +222,7 @@ def delete_category():
 
     con.close()
     return redirect('/admin')
+
 
 @app.route('/add-category', methods=['POST', 'GET'])
 def add_category():
@@ -198,7 +235,7 @@ def add_category():
         query = "INSERT INTO categories (category) VALUES (?)"
         cur = con.cursor()
         try:
-            cur.execute(query, (category_name, ))
+            cur.execute(query, (category_name,))
         except sqlite3.IntegrityError:
             con.close()
             return redirect('/admin?message=category+already+exists')
@@ -206,6 +243,7 @@ def add_category():
         con.close()
 
         return redirect('/admin')
+
 
 @app.route('/add-word', methods=['POST', 'GET'])
 def add_word():
@@ -233,7 +271,7 @@ def add_word():
 
         try:
             cur.execute(query, (
-            maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
+                maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
         except sqlite3.IntegrityError:
             con.close()
             return redirect('/signup?error=word+is+already+used')
@@ -243,35 +281,37 @@ def add_word():
         return redirect('/admin')
 
 
-@app.route('/categories/<category>/<word>')
-def render_word(category, word):
+@app.route('/categories/<category>/<word_id>')
+def render_word(category, word_id):
     if not is_logged_in_as_teacher()[0]:
         return redirect('/?message=Need+to+be+logged+in')
-    query = "SELECT words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category FROM words INNER JOIN users ON words.author_of_entry=users.id WHERE maori_name = ? AND category = ?"
+    query = "SELECT words.id, words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category FROM words INNER JOIN users ON words.author_of_entry=users.id WHERE words.id = ?"
     # query = "SELECT words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, categories.category FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON words.category=categories.id WHERE maori_name = ? AND category = ?"
     con = open_database(DATABASE)
     cur = con.cursor()
-    cur.execute(query, (word, category, ))
+    cur.execute(query, (word_id, ))
     word_list = cur.fetchall()
     print(word_list)
     con.close()
     if not bool(word_list):
         return redirect('/?message=word+doesnt+exist')
-    return render_template('word.html', logged_in=is_logged_in_as_teacher(), category_list=get_all_categories(), word_list=word_list)
+    return render_template('word.html', logged_in=is_logged_in_as_teacher(), category_list=get_all_categories(),
+                           word_list=word_list, levels=LEVELS)
 
 
 @app.route('/categories/<category>/')
 def render_category(category):
     if not is_logged_in_as_teacher()[0]:
         return redirect('/?message=Need+to+be+logged+in')
-    query = "SELECT maori_name, english_name, definition, img_src, category FROM words where category = ?"
+    query = "SELECT id, maori_name, english_name, definition, img_src, category FROM words where category = ?"
     con = open_database(DATABASE)
     cur = con.cursor()
     cur.execute(query, (category,))
     words_list = cur.fetchall()
     print(words_list)
     con.close()
-    return render_template('words-category.html', logged_in=is_logged_in_as_teacher(), words=words_list, category_list=get_all_categories())
+    return render_template('words-category.html', logged_in=is_logged_in_as_teacher(), words=words_list,
+                           category_list=get_all_categories())
 
 
 @app.errorhandler(404)

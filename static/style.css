@@ -237,9 +237,17 @@ main{
     position: relative;
 }
 
-.admin-main{
-    display: flex;
-    /*justify-content: center;*/
+form{
+    background-color: var(--backcolour);
+    width: 350px;
+    /*transform: translate(50%, -50%);*/
+    /*top: 50%;*/
+    /*left: 50%;*/
+    box-shadow: 10px 10px 10px -1px var(--shadowcolour),
+                -10px -10px 10px -1px var(--maincolour);
+    padding: 40px 20px;
+    margin: auto;
+    border-radius: 30px;
 }
 
 input[type='submit']{
@@ -255,22 +263,6 @@ input[type='submit']{
     border: none;
     padding: 10px;
     cursor: pointer;
-}
-
-form{
-
-    background-color: var(--backcolour);
-    width: 350px;
-    /*position: page;*/
-    /*position: center;*/
-    /*transform: translate(50%, -50%);*/
-    top: 50%;
-    left: 50%;
-    box-shadow: 10px 10px 10px -1px var(--shadowcolour),
-                -10px -10px 10px -1px var(--maincolour);
-    padding: 40px 20px;
-    margin: 20px;
-    border-radius: 30px;
 }
 
 input[type='text'], input[type='password'], input[type='email'], select{
@@ -345,4 +337,14 @@ input[type='radio']:checked:after{
 
 input{
     color: #00a037;
+}
+
+
+.container-form{
+    box-shadow: none;
+    width: auto;
+}
+
+.container-form input[type='text']{
+    font-size: x-large;
 }

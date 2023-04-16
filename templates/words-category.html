@@ -4,12 +4,12 @@
 <div class="grid-container">
     {% for word in words %}
     <div class="container">
-    <a href="/categories/{{ word[4] }}/{{ word[0] }}">
+    <a href="/categories/{{ word[5] }}/{{ word[0] }}">
         <div class="content-box">
-            <img src="/static/images/{{ word[3] }}" alt="Not Yet">
-            <h5>{{ word[0] }}</h5>
+            <img src="/static/images/{{ word[4] }}" alt="Not Yet">
             <h5>{{ word[1] }}</h5>
             <h5>{{ word[2] }}</h5>
+            <h5>{{ word[3] }}</h5>
         </div>
     </a>
     </div>
