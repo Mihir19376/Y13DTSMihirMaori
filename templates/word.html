@@ -3,7 +3,11 @@
 {% block main %}
 <div class="image">
     {% for info in word_list %}
-        <img src="/static/images/{{ info[4] }}" alt="{{ info[4] }}">
+        {% if info[4]|length %}
+            <img src="/static/images/{{ info[4] }}" alt="{{ info[4] }}">
+        {% else %}
+            <img src="/static/images/no-image-available.png" alt="no-image-available.png">
+        {% endif %}
     {% endfor %}
 
 </div>
@@ -12,6 +16,7 @@
 {% if logged_in[1] %}
     <form method="post" action="/edit-word" enctype="multipart/form-data" class="container-form">
     {% for info in word_list %}
+        <input type="hidden" value="{{ info[4] }}" name="previous_img_src" id="previous_img_src">
         <input type="hidden" value="{{ info[0] }}" name="id" id="id">
         <p>Maori Word</p>
         <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="89" value="{{ info[1] }}">
@@ -27,7 +32,7 @@
         <br>
         <p>Category</p>
         <select id="cat_id" name="cat_id" required>
-            <option value="{{ info[8] }}" selected>{{ info[8] }}</option>
+            <option value="{{ info[8] }}" selected hidden>{{ info[9] }}</option>
             {% for category in category_list %}
             <option value="{{ category[0] }}">{{ category[1] }}</option>
             {% endfor %}
@@ -35,7 +40,7 @@
         <br>
         <p>Year Level</p>
         <select id="level_id" name="level_id" required>
-            <option value="{{ info[7] }}" selected>{{ info[7] }}</option>
+            <option value="{{ info[7] }}" selected hidden>{{ info[7] }}</option>
             {% for level in levels %}
             <option value="{{ level }}">{{ level }}</option>
             {% endfor %}
@@ -57,7 +62,7 @@
         {# and you cant edit the author because that is also done automatically #}
     <p>Author of Entry</p> <h3 id="new_author">{{ info[6] }}</h3>
     <p>Year Level</p> <h3 contenteditable="{{ logged_in[1] }}" id="new_level">{{ info[7] }}</h3>
-    <p>Category</p> <h3 contenteditable="{{ logged_in[1] }}" id="new_category">{{ info[8] }}</h3>
+    <p>Category</p> <h3 contenteditable="{{ logged_in[1] }}" id="new_category">{{ info[9] }}</h3>
     {% endfor %}
 {% endif %}
 </div>

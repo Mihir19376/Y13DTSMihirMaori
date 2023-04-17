@@ -60,8 +60,9 @@ def monkey():
         print(request.form)
         con = open_database(DATABASE)
         cur = con.cursor()
+        old_image = request.form.get('previous_img_src')
+        print(old_image)
         word_id = request.form.get('id')
-        print(id)
         maori_word = request.form.get('maori_word')  #
         english_word = request.form.get('english_word')  #
         definition = request.form.get('definition')  #
@@ -85,6 +86,8 @@ def monkey():
             cur.execute(query, (image_src, word_id, ))
             con.commit()
             con.close()
+            if old_image != "no-image-available.png" and old_image != '':
+                os.remove(f'static/images/{old_image}')
             return redirect('/')
 
 @app.route('/')
@@ -285,7 +288,7 @@ def add_word():
 def render_word(category, word_id):
     if not is_logged_in_as_teacher()[0]:
         return redirect('/?message=Need+to+be+logged+in')
-    query = "SELECT words.id, words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category FROM words INNER JOIN users ON words.author_of_entry=users.id WHERE words.id = ?"
+    query = "SELECT words.id, words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category, categories.category FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON words.category=categories.id WHERE words.id = ?"
     # query = "SELECT words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, categories.category FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON words.category=categories.id WHERE maori_name = ? AND category = ?"
     con = open_database(DATABASE)
     cur = con.cursor()

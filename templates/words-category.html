@@ -6,7 +6,11 @@
     <div class="container">
     <a href="/categories/{{ word[5] }}/{{ word[0] }}">
         <div class="content-box">
-            <img src="/static/images/{{ word[4] }}" alt="Not Yet">
+            {% if word[4]|length %}
+                <img src="/static/images/{{ word[4] }}" alt="{{ word[4]}}">
+            {% else %}
+                <img src="/static/images/no-image-available.png" alt="no-image-available.png">
+            {% endif %}
             <h5>{{ word[1] }}</h5>
             <h5>{{ word[2] }}</h5>
             <h5>{{ word[3] }}</h5>
