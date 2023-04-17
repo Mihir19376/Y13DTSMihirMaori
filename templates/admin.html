@@ -3,7 +3,7 @@
 {% block main %}
 <div class="admin-main">
 <h1>Add Word</h1>
-<form method="post" action="/add-word" enctype="multipart/form-data">
+<form method="post" action="/add-word" enctype="multipart/form-data" onsubmit="return confirm('Do you really want to add this word?');">
     <h5>Maori Word</h5>
     <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="89">
     <br>
@@ -30,17 +30,17 @@
         {% endfor %}
     </select>
     <div class="error">{{ error }}</div>
-    <input type="submit" value="Add" style="color: var(--fontcolour)">
+    <input type="submit" value="Add">
 </form>
 
 
     <h1>Add Category</h1>
-    <form method="post" action="/add-category">
+    <form method="post" action="/add-category" onsubmit="return confirm('Do you really want to add this category?');">
         <h5>Category Name</h5>
         <input type="text" name="category_name" id="category_name" required minlength="2" maxlength="45">
         <br>
         <div class="error">{{ error }}</div>
-        <input type="submit" value="Add" style="color: var(--fontcolour)">
+        <input type="submit" value="Add">
     </form>
 
     <h1>Delete Category</h1>
@@ -53,7 +53,7 @@
         </select>
         <br>
         <div class="error">{{ error }}</div>
-        <input type="submit" value="Delete" style="color: var(--fontcolour)">
+        <input type="submit" value="Delete">
     </form>
 </div>
 

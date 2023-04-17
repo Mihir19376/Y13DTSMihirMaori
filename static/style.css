@@ -62,6 +62,7 @@ h1, h2, h3{
     color: var(--fontcolour);
     margin: 10px;
     text-align: center;
+    text-transform: capitalize;
 }
 
 p{
@@ -263,6 +264,7 @@ input[type='submit']{
     border: none;
     padding: 10px;
     cursor: pointer;
+    color: red;
 }
 
 input[type='text'], input[type='password'], input[type='email'], select{
@@ -347,4 +349,8 @@ input{
 
 .container-form input[type='text']{
     font-size: x-large;
+}
+
+.error-message{
+    color: red;
 }
