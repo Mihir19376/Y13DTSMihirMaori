@@ -52,9 +52,11 @@
                 {% if logged_in[1] %}
                     <a href="/admin"><button type="button" style="float: right;">Admin</button></a>
                 {% endif %}
-                <div class="input-container" style="float: right;">
-				    <input type="search" placeholder="Search..." style="float: right;">
-			    </div>
+                <form style="all: revert;" action="/search" method="post">
+                    <div class="input-container" style="float: right;">
+                        <input type="search" id="ghgh" name="ghgh" placeholder="Search..." style="float: right;">
+                    </div>
+                </form>
             {% else %}
             <a href="/signup"><button type="button" style="float: right;">Signup</button></a>
             <a href="/login"><button type="button" style="float: right;">Login</button></a>

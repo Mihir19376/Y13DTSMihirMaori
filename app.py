@@ -16,8 +16,11 @@ app.config['UPLOAD'] = upload
 
 MIN_PASSWORD_LENGTH = 8
 PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"
-USER_NAME_REGEX_REQUIREMENTS = "^[a-zA-Z0-9]+$"
+# USER_NAME_REGEX_REQUIREMENTS = "^[a-zA-Z0-9]+$"
+USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"
 LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+TEACHER_USER_TYPE = 2
+STUDENT_USER_TYPE = 1
 
 
 def get_all_categories():
@@ -36,11 +39,11 @@ def is_logged_in_as_teacher():
         print("not logged in")
         return [False, False]
     else:
-        if session.get("user_type") == 2:
+        if session.get("user_type") == TEACHER_USER_TYPE:
             print("logged in")
             # logged in is true, and as teacher is true
             return [True, True]
-        elif session.get("user_type") == 1:
+        elif session.get("user_type") == STUDENT_USER_TYPE:
             # logged in is true, but as teacher is false
             return [True, False]
 
@@ -53,6 +56,7 @@ def open_database(db_name):
         print(e)
     return None
 
+
 @app.route('/delete-word', methods=['POST', 'GET'])
 def delete_word():
     if not is_logged_in_as_teacher()[1]:
@@ -64,13 +68,15 @@ def delete_word():
         query = "DELETE FROM words WHERE id = ?"
         con = open_database(DATABASE)
         cur = con.cursor()
-        cur.execute(query,(id, ))
+        cur.execute(query, (id, ))
         con.commit()
         con.close()
+        flash("Word Deleted")
         return redirect('/')
     elif request.method == 'GET':
         flash("Cant enter URL manually!")
         return redirect('/?message=cant+enter+url+manually')
+
 
 @app.route('/edit-word', methods=['POST', 'GET'])
 def edit_word():
@@ -94,29 +100,69 @@ def edit_word():
         file = request.files['image_file']
         image_src = secure_filename(file.filename) #
 
-        query = "UPDATE words SET maori_name = ?, english_name = ?, definition = ?, last_edit_time = ?, author_of_entry = ?, year_level = ?, category = ? WHERE id = ?"
-        cur.execute(query, (maori_word, english_word, definition, time_of_entry, author, year_level, category, word_id, ))
-        con.commit()
-        if image_src == "":
-            con.close()
-            return redirect('/')
-        else:
-            print(image_src)
-            file.save(os.path.join(app.config['UPLOAD'], image_src))
-            query = "UPDATE words SET img_src = ? WHERE id = ?"
-            cur.execute(query, (image_src, word_id, ))
+        con = open_database(DATABASE)
+        query = f"SELECT * FROM words WHERE maori_name = ? AND english_name = ? AND NOT id = ?"
+        cur = con.cursor()
+        cur.execute(query, (maori_word, english_word, word_id))
+        word_already_exits = bool(cur.fetchall())
+        # con.close()
+
+        if not word_already_exits:
+            query = "UPDATE words SET maori_name = ?, english_name = ?, definition = ?, last_edit_time = ?, author_of_entry = ?, year_level = ?, category = ? WHERE id = ?"
+            cur.execute(query, (maori_word, english_word, definition, time_of_entry, author, year_level, category, word_id, ))
             con.commit()
+            if image_src == "":
+                con.close()
+                flash('Updated!')
+                return redirect(f'/categories/{category}/{word_id}')
+            else:
+                print(image_src)
+                file.save(os.path.join(app.config['UPLOAD'], image_src))
+                query = "UPDATE words SET img_src = ? WHERE id = ?"
+                cur.execute(query, (image_src, word_id, ))
+                con.commit()
+                con.close()
+                if old_image != "no-image-available.png" and old_image != '':
+                    os.remove(f'static/images/{old_image}')
+                flash('Updated!')
+                return redirect(f'/categories/{category}/{word_id}')
+        else:
             con.close()
-            if old_image != "no-image-available.png" and old_image != '':
-                os.remove(f'static/images/{old_image}')
+            flash('This word with the same meaning already exits!')
             return redirect('/')
     elif request.method == 'GET':
         flash("Cant enter URL manually!")
         return redirect('/?message=you+cant+access+manually')
 
+
 @app.route('/')
 def render_home():  # put application's code here
     return render_template('home.html', logged_in=is_logged_in_as_teacher(), category_list=get_all_categories())
+
+
+@app.route("/search", methods=["GET", "POST"])
+def render_search():
+    if request.method == 'POST':
+        print(request.form)
+        search = request.form.get('ghgh').strip()
+        print(search)
+        query = "SELECT id, maori_name, english_name, definition, img_src, category FROM words WHERE maori_name like ? or english_name like ?"
+        search = "%" + search + "%"
+        con = open_database(DATABASE)
+        cur = con.cursor()
+        cur.execute(query, (search, search, ))
+        words = cur.fetchall()
+        con.close()
+        if not bool(words):
+            flash(f"There are no words related to {search.strip('%')}")
+            return redirect('/')
+        # this code has to use .lower() for the format so that it is in lowercase's like the file name is.
+        return render_template("words-category.html", logged_in=is_logged_in_as_teacher(), words=words, category_list=get_all_categories())
+    elif request.method == 'GET':
+        flash("cant enter URL manually!")
+        return redirect('/?message=you+cant+access+manually')
+
+
 
 
 @app.route('/signup', methods=['POST', 'GET'])
@@ -151,9 +197,6 @@ def render_signup():
         con.close()
 
         return redirect('/login')
-    elif request.method == 'GET':
-        flash("Cant enter URL manually!")
-        return redirect('/?message=you+cant+access+manually')
 
     return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS,
                            user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=is_logged_in_as_teacher(),
@@ -178,6 +221,7 @@ def render_login():
 
         if user_data is None:
             return redirect('/login?error=Email+invalid')
+
         try:
             user_id = user_data[0][0]
             user_name = user_data[0][1]
@@ -306,18 +350,39 @@ def add_word():
         author = session.get("user_id")
         time_of_entry = datetime.now()
 
-        con = open_database(DATABASE)
-        query = "INSERT INTO words (maori_name, english_name, definition, img_src, last_edit_time, author_of_entry, year_level, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        cur = con.cursor()
 
-        try:
+        # make sure to check if a duplicate words exits.
+        # make sure that no word with the same maori name and same english name exits
+        # but, that said, multiple entry's can have the same english name, and can also have the same maori name.
+
+        con = open_database(DATABASE)
+        query = "SELECT * FROM words WHERE maori_name = ? AND english_name = ?"
+        cur = con.cursor()
+        cur.execute(query, (maori_word, english_word))
+        word_already_exits = bool(cur.fetchall())
+        con.close()
+
+        if not word_already_exits:
+            con = open_database(DATABASE)
+            query = "INSERT INTO words (maori_name, english_name, definition, img_src, last_edit_time, author_of_entry, year_level, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            cur = con.cursor()
             cur.execute(query, (
                 maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
-        except sqlite3.IntegrityError:
+        else:
             con.close()
-            return redirect('/signup?error=word+is+already+used')
+            flash('This word with the same meaning already exits!')
+            return redirect('/admin')
         con.commit()
         con.close()
+
+        # try:
+        #     cur.execute(query, (
+        #         maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
+        # except sqlite3.IntegrityError:
+        #     con.close()
+        #     return redirect('/signup?error=word+is+already+used')
+        # con.commit()
+        # con.close()
 
         return redirect('/admin')
     elif request.method == 'GET':
@@ -356,6 +421,9 @@ def render_category(category):
     words_list = cur.fetchall()
     print(words_list)
     con.close()
+    if not bool(words_list):
+        flash("This category doesnt have anything to view in it yet")
+        return redirect('/')
     return render_template('words-category.html', logged_in=is_logged_in_as_teacher(), words=words_list,
                            category_list=get_all_categories())
 
