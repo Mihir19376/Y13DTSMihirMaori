@@ -25,6 +25,7 @@ main {
     border-radius: 30px;
     box-shadow:  inset 10px 10px 10px -1px var(--shadowcolour),
                 inset -10px -10px 10px -1px var(--maincolour);
+    mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
 }
 
 .container{
@@ -106,7 +107,7 @@ span{
     background-color: var(--backcolour);
     min-width: 160px;
     z-index: 1;
-    border-radius: 30px;
+    border-radius: 20px;
     box-shadow: 10px 10px 10px -1px var(--shadowcolour),
         -10px -10px 10px -1px var(--maincolour);
     left: 0;

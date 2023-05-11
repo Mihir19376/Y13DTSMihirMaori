@@ -23,6 +23,9 @@ TEACHER_USER_TYPE = 2
 STUDENT_USER_TYPE = 1
 
 
+def fetch_from_database(query_string):
+    query = query_string
+
 def get_all_categories():
     query = "SELECT id, category FROM categories"
     con = open_database(DATABASE)
@@ -322,7 +325,7 @@ def add_category():
             return redirect('/admin?message=category+already+exists')
         con.commit()
         con.close()
-
+        flash('Category Added!')
         return redirect('/admin')
     elif request.method == 'GET':
         flash("cant enter URL manually!")
@@ -350,7 +353,6 @@ def add_word():
         author = session.get("user_id")
         time_of_entry = datetime.now()
 
-
         # make sure to check if a duplicate words exits.
         # make sure that no word with the same maori name and same english name exits
         # but, that said, multiple entry's can have the same english name, and can also have the same maori name.
@@ -375,15 +377,7 @@ def add_word():
         con.commit()
         con.close()
 
-        # try:
-        #     cur.execute(query, (
-        #         maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id))
-        # except sqlite3.IntegrityError:
-        #     con.close()
-        #     return redirect('/signup?error=word+is+already+used')
-        # con.commit()
-        # con.close()
-
+        flash('Word Added!')
         return redirect('/admin')
     elif request.method == 'GET':
         flash("cant enter URL manually!")
