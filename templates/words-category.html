@@ -4,7 +4,7 @@
 <div class="grid-container">
     {% for word in words %}
     <div class="container">
-    <a href="/categories/{{ word[5] }}/{{ word[0] }}">
+    <a href="/words/{{ word[0] }}">
         <div class="content-box">
             {% if word[4]|length %}
                 <img src="/static/images/{{ word[4] }}" alt="{{ word[4]}}">

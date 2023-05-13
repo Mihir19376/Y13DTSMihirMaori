@@ -78,7 +78,7 @@ def db_fetch_or_commit(query_string, query_parameters, push):
 def delete_word():
     if not check_log_in_status()[1]:
         flash("Need to be logged in as teacher!")
-        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+        return redirect('/')
     if request.method == 'POST':
         print(request.form)
         id = request.form.get('deletion_id')
@@ -88,14 +88,14 @@ def delete_word():
         return redirect('/')
     elif request.method == 'GET':
         flash("Cant enter URL manually!")
-        return redirect('/?message=cant+enter+url+manually')
+        return redirect('/')
 
 
 @app.route('/edit-word', methods=['POST', 'GET'])
 def edit_word():
     if not check_log_in_status()[1]:
         flash("Need to be logged in as teacher!")
-        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+        return redirect('/')
 
     if request.method == 'POST':
         print(request.form)
@@ -120,7 +120,7 @@ def edit_word():
 
             if image_src == "":
                 flash('Updated!')
-                return redirect(f'/categories/{category}/{word_id}')
+                return redirect(f'/words/{word_id}')
             else:
                 print(image_src)
                 file.save(os.path.join(app.config['UPLOAD'], image_src))
@@ -129,13 +129,13 @@ def edit_word():
                 if old_image != "no-image-available.png" and old_image != '':
                     os.remove(f'static/images/{old_image}')
                 flash('Updated!')
-                return redirect(f'/categories/{category}/{word_id}')
+                return redirect(f'/words/{word_id}')
         else:
             flash('This word with the same meaning already exits!')
             return redirect('/')
     elif request.method == 'GET':
         flash("Cant enter URL manually!")
-        return redirect('/?message=you+cant+access+manually')
+        return redirect('/')
 
 
 @app.route('/')
@@ -160,14 +160,14 @@ def render_search():
                                category_list=get_all_categories())
     elif request.method == 'GET':
         flash("cant enter URL manually!")
-        return redirect('/?message=you+cant+access+manually')
+        return redirect('/')
 
 
 @app.route('/signup', methods=['POST', 'GET'])
 def render_signup():
     if check_log_in_status()[0]:
         flash("You are already logged in!")
-        return redirect('/?message=already+logged+in')
+        return redirect('/')
     if request.method == 'POST':
         print(request.form)
         user_name = request.form.get('user_name').strip()
@@ -177,7 +177,8 @@ def render_signup():
         password2 = request.form.get('password2')
 
         if password1 != password2:
-            return redirect('\signup?error=passwords+do+not+match')
+            flash('Passwords do not match')
+            return redirect('\signup')
 
         hashed_password = bcrypt.generate_password_hash(password1)
         print(user_name, email, password1, user_type, hashed_password)
@@ -187,8 +188,10 @@ def render_signup():
         try:
             db_fetch_or_commit(query, (user_name, email, hashed_password, user_type), True)
         except sqlite3.IntegrityError:
-            flash('email is already being used')
-            return redirect('/signup?error=Email+is+already+used')
+            flash('this email is already being used')
+            return redirect('/signup')
+
+        flash('Signup Successful!')
         return redirect('/login')
 
     return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS,
@@ -199,8 +202,8 @@ def render_signup():
 @app.route('/login', methods=["POST", "GET"])
 def render_login():
     if check_log_in_status()[0]:
-        flash("Already logged in!")
-        return redirect('/?message=already+logged+in')
+        flash("You are already logged in!")
+        return redirect('/')
     if request.method == 'POST':
         email = request.form['email_address'].strip().lower()
         password = request.form['password'].strip()
@@ -208,7 +211,8 @@ def render_login():
         query = "SELECT id, name, password, user_type  FROM users WHERE email = ?"
         user_data = db_fetch_or_commit(query, (email,), False)
         if user_data is None:
-            return redirect('/login?error=Email+invalid')
+            flash('Email Invalid')
+            return redirect('/login')
 
         try:
             user_id = user_data[0][0]
@@ -216,9 +220,11 @@ def render_login():
             db_password = user_data[0][2]
             user_type = user_data[0][3]
         except IndexError:
+            flash('email invalid or password incorrect')
             return redirect('/login?error=Email+invalid+or+password+incorrect')
 
         if not bcrypt.check_password_hash(db_password, password):
+            flash('password incorrect')
             return redirect(request.referrer + "?error=Password+incorrect")
 
         session['email'] = email
@@ -227,6 +233,7 @@ def render_login():
         session["user_type"] = user_type
         print(session)
 
+        flash('Logged In!')
         return redirect('/')
 
     return render_template('login.html', logged_in=check_log_in_status(), category_list=get_all_categories())
@@ -238,14 +245,14 @@ def logout():
     [session.pop(key) for key in list(session.keys())]
     print(list(session.keys()))
     flash("See you next time!")
-    return redirect('/?message=See+you+nest+time!')
+    return redirect('/')
 
 
 @app.route('/admin')
 def admin():
     if not check_log_in_status()[1]:
         flash("Need to be logged in as teacher!")
-        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+        return redirect('/')
 
     return render_template('admin.html', logged_in=check_log_in_status(), levels=LEVELS, categories=get_all_categories(),
                            category_list=get_all_categories())
@@ -255,7 +262,7 @@ def admin():
 def delete_category():
     if not check_log_in_status()[1]:
         flash("Need to be logged in as teacher!")
-        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+        return redirect('/')
     category_to_delete = request.form.get('cat_id')
 
     # delete the images
@@ -271,6 +278,8 @@ def delete_category():
     # delete the category itself
     query = "DELETE FROM categories WHERE id = ?"
     db_fetch_or_commit(query, (category_to_delete,), True)
+
+    flash(f'{category_to_delete} Category Deleted!')
     return redirect('/admin')
 
 
@@ -278,7 +287,7 @@ def delete_category():
 def add_category():
     if not check_log_in_status()[1]:
         flash("Need to be logged in as teacher!")
-        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+        return redirect('/')
     if request.method == 'POST':
         print(request.form)
         category_name = request.form.get('category_name')
@@ -287,19 +296,19 @@ def add_category():
             db_fetch_or_commit(query, (category_name,), True)
         except sqlite3.IntegrityError:
             flash("This category already exists!")
-            return redirect('/admin?message=category+already+exists')
+            return redirect('/admin')
         flash('Category Added!')
         return redirect('/admin')
     elif request.method == 'GET':
         flash("cant enter URL manually!")
-        return redirect('/?message=you+cant+access+manually')
+        return redirect('/')
 
 
 @app.route('/add-word', methods=['POST', 'GET'])
 def add_word():
     if not check_log_in_status()[1]:
         flash("Need to be logged in as teacher!")
-        return redirect('/?message=Need+to+be+logged+in+as+teacher')
+        return redirect('/')
     if request.method == 'POST':
         print(request.form)
         maori_word = request.form.get('maori_word')  #
@@ -331,14 +340,14 @@ def add_word():
         return redirect('/admin')
     elif request.method == 'GET':
         flash("cant enter URL manually!")
-        return redirect('/?message=you+cant+access+manually')
+        return redirect('/')
 
 
-@app.route('/categories/<category>/<word_id>')
-def render_word(category, word_id):
+@app.route('/words/<word_id>')
+def render_word(word_id):
     if not check_log_in_status()[0]:
         flash("Need to be logged in as a teacher or student!")
-        return redirect('/?message=Need+to+be+logged+in')
+        return redirect('/')
     query = "SELECT words.id, words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category, categories.category FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON words.category=categories.id WHERE words.id = ?"
 
     word_list = db_fetch_or_commit(query, (word_id,), False)
@@ -346,7 +355,7 @@ def render_word(category, word_id):
 
     if not bool(word_list):
         flash("that word doesnt exist!")
-        return redirect('/?message=word+doesnt+exist')
+        return redirect('/')
     return render_template('word.html', logged_in=check_log_in_status(), category_list=get_all_categories(),
                            word_list=word_list, levels=LEVELS)
 
@@ -355,7 +364,7 @@ def render_word(category, word_id):
 def render_category(category):
     if not check_log_in_status()[0]:
         flash("Need to be logged in as a teacher or student!")
-        return redirect('/?message=Need+to+be+logged+in')
+        return redirect('/')
 
     query = "SELECT id, maori_name, english_name, definition, img_src, category FROM words where category = ?"
     words_list = db_fetch_or_commit(query, (category,), False)
