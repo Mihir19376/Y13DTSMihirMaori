@@ -37,6 +37,13 @@ MIN_PASSWORD_CHARS = 8  # Minimum amount of characters in a password.
 
 
 def redirect_and_flash(redirect_url, flash_message):
+    """
+    The redirect_and_flash function will redirect the site to the given url and flash a message that the html will pick
+     up and display
+    :param redirect_url: The url string you wish to redirect the site to
+    :param flash_message: The message string you wish to display once they are redirected
+    :return: a redirect statement that redirects the site to the given url
+    """
     flash(flash_message)
     return redirect(redirect_url)
 
@@ -52,12 +59,21 @@ def get_all_categories():
 
 
 def check_log_in_status():
+    """
+    This function will check what log in status the user is in and return a list that signifies their status. The first
+    element within the list will be a boolean stating if they are in fact logged in at all (True) or not (False) and the
+    second entry will represent if they are logged in as a teacher (True) or not (False). This functioned is called
+    everytime the site is loaded on any page.
+    :return: List containing the two booleans signifying the login status of the current user.
+    """
+    # If there is no email in their log in session then continue
     if session.get("email") is None:
         print("not logged in")
-        return [False, False]
+        return [False, False]  # return "Not logged in" & "Not Teacher"
+    # If there is an email then continue:
     else:
         print('Logged In')
-        return [True, session.get("user_type") == TEACHER_USER_TYPE]
+        return [True, session.get("user_type") == TEACHER_USER_TYPE]  # Return "Logged in" & "Not Teacher" or "Teacher"
 
 
 def open_database(db_name):
