@@ -3,10 +3,10 @@
 {% block main %}
 <form method="post">
     <h5>User Name</h5>
-    <input type="text" name="user_name" id="user_name" required minlength="2" maxlength="45" pattern="{{ user_name_regex }}" title="No special Characters">
+    <input type="text" name="user_name" id="user_name" required minlength="2" maxlength="{{ max_name }}" pattern="{{ user_name_regex }}" title="No special Characters">
     <br>
     <h5>Email Address</h5>
-    <input type="email" placeholder="example@example.com" name="email_address" id="email_address" required maxlength="60">
+    <input type="email" placeholder="example@example.com" name="email_address" id="email_address" required maxlength="{{ max_email }}">
     <br>
     <h5>Who are you ?</h5>
     <input type="radio" name="qualification" id="student" value="1" required>

@@ -6,21 +6,34 @@ from flask_bcrypt import Bcrypt
 import os
 from datetime import datetime
 
-# define some important stuff
-DATABASE = "maoridictionary.db"
-app = Flask(__name__)
-bcrypt = Bcrypt(app)
-app.secret_key = "ueuywq9571"
-upload = 'static/images'
-app.config['UPLOAD'] = upload
+# ---Setting up the App---
+DATABASE = "maoridictionary.db" # Assign dictionary db path to variable for connection reference late on.
+app = Flask(__name__)  # Initialise the Flask app.
+bcrypt = Bcrypt(app)  # Initialise the encryption app.
+app.secret_key = "ueuywq9571"  # Secret De/Encryption Key for scrambling the passwords.
+upload = 'static/images'  # File path to the folder where to upload and store the words reference images.
+app.config['UPLOAD'] = upload  # Setting the upload destination that my program uses to the upload file path.
 
-MIN_PASSWORD_LENGTH = 8
-PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"
-# USER_NAME_REGEX_REQUIREMENTS = "^[a-zA-Z0-9]+$"
-USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"
-LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-TEACHER_USER_TYPE = 2
-STUDENT_USER_TYPE = 1
+# ---Constants---
+LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # The year level meant for each word.
+
+TEACHER_USER_TYPE = 2  # Setting the user type for the teacher to the number 2 to correlate with the number in the db
+STUDENT_USER_TYPE = 1  # Setting the user type for the student to the number 1 to correlate with the number in the db
+
+PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"  # password requirements - must have 1 lowercase, 1 uppercase, and one number
+USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"  # user_name requirements - cant have any speacial characters except for "-" and "'"
+
+# ---User Input Boundary Constraints---
+MINIMUM_CHARS = 2  # The minimum input across all inputs.
+MAX_MAORI_WORD_CHARS = 89  # Maximum characters for a Maori Word.
+MAX_ENGLISH_WORD_CHARS = 45  # Maximum characters for an English Word.
+MAX_DEFINITION_CHARS = 500  # Maximum characters for a definition.
+MAX_IMAGE_SOURCE_CHARS = 60  # Maximum characters for an image source path.
+MAX_NAME_CHARS = 45  # Maximum characters for a users name.
+MAX_EMAIL_CHARS = 60  # Maximum characters for a users email address.
+MAX_PASSWORD_CHARS = 72  # Maximum characters for a password.
+MAX_CATEGORY_CHARS = 45  # Maximum characters for a category name
+MIN_PASSWORD_CHARS = 8  # Minimum amount of characters in a password.
 
 
 def redirect_and_flash(redirect_url, flash_message):
@@ -45,13 +58,6 @@ def check_log_in_status():
     else:
         print('Logged In')
         return [True, session.get("user_type") == TEACHER_USER_TYPE]
-        # if session.get("user_type") == TEACHER_USER_TYPE:
-        #     print("logged in")
-        #     # logged in is true, and as teacher is true
-        #     return [True, True]
-        # elif session.get("user_type") == STUDENT_USER_TYPE:
-        #     # logged in is true, but as teacher is false
-        #     return [True, False]
 
 
 def open_database(db_name):
@@ -171,6 +177,7 @@ def render_signup():
         user_type = request.form['qualification']
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
+        # password1, password2 = request.form.get('password1', 'password2')
 
         if password1 != password2:
             return redirect_and_flash('/signup', 'Passwords do not match')
@@ -187,9 +194,9 @@ def render_signup():
 
         return redirect_and_flash('/login', 'Signup Successful!')
 
-    return render_template('signup.html', min_password=MIN_PASSWORD_LENGTH, password_regex=PASSWORD_REGEX_REQUIREMENTS,
+    return render_template('signup.html', min_password=MIN_PASSWORD_CHARS, password_regex=PASSWORD_REGEX_REQUIREMENTS,
                            user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=check_log_in_status(),
-                           category_list=get_all_categories())
+                           category_list=get_all_categories(), max_email=MAX_EMAIL_CHARS, max_name=MAX_NAME_CHARS)
 
 
 @app.route('/login', methods=["POST", "GET"])
@@ -224,7 +231,7 @@ def render_login():
 
         return redirect_and_flash('/', 'Logged In!')
 
-    return render_template('login.html', logged_in=check_log_in_status(), category_list=get_all_categories())
+    return render_template('login.html', logged_in=check_log_in_status(), category_list=get_all_categories(), min_password=MIN_PASSWORD_CHARS)
 
 
 @app.route('/logout')
@@ -241,7 +248,8 @@ def admin():
         return redirect_and_flash('/', "Need to be logged in as teacher!")
 
     return render_template('admin.html', logged_in=check_log_in_status(), levels=LEVELS, categories=get_all_categories(),
-                           category_list=get_all_categories())
+                           category_list=get_all_categories(), max_maori=MAX_MAORI_WORD_CHARS,
+                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS)
 
 
 @app.route('/delete-category', methods=['POST', 'GET'])
@@ -301,6 +309,9 @@ def add_word():
         file = request.files['image_file']
         image_src = secure_filename(file.filename)  #
         file.save(os.path.join(app.config['UPLOAD'], image_src))
+
+
+
         # Make sure to check if file already exists and don't add the file if it does.
         author = session.get("user_id")
         time_of_entry = datetime.now()
@@ -332,7 +343,8 @@ def render_word(word_id):
     if not bool(word_list):
         return redirect_and_flash('/', "That word doesn't exist!")
     return render_template('word.html', logged_in=check_log_in_status(), category_list=get_all_categories(),
-                           word_list=word_list, levels=LEVELS)
+                           word_list=word_list, levels=LEVELS, max_maori=MAX_MAORI_WORD_CHARS,
+                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS)
 
 
 @app.route('/categories/<category>/')

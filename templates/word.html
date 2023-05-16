@@ -19,13 +19,13 @@
             <input type="hidden" value="{{ info[4] }}" name="previous_img_src" id="previous_img_src">
             <input type="hidden" value="{{ info[0] }}" name="id" id="id">
             <p>Maori Word</p>
-            <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="89" value="{{ info[1] }}">
+            <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="{{ max_maori }}" value="{{ info[1] }}">
             <br>
             <p>English Translation</p>
-            <input type="text" name="english_word" id="english_word" required maxlength="45" minlength="2" value="{{ info[2] }}">
+            <input type="text" name="english_word" id="english_word" required maxlength="{{ max_english }}" minlength="2" value="{{ info[2] }}">
             <br>
             <p>Description</p>
-            <input type="text" name="definition" id="definition" required maxlength="500" minlength="2" value="{{ info[3] }}">
+            <input type="text" name="definition" id="definition" required maxlength="{{ max_definition }}" minlength="2" value="{{ info[3] }}">
             <br>
             <p>Image File</p>
             <input type="file" name="image_file" id="image_file">

@@ -5,13 +5,13 @@
 <h1>Add Word</h1>
 <form method="post" action="/add-word" enctype="multipart/form-data" onsubmit="return confirm('Do you really want to add this word?');">
     <h5>Maori Word</h5>
-    <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="89">
+    <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="{{ max_maori }}">
     <br>
     <h5>English Translation</h5>
-    <input type="text" name="english_word" id="english_word" required maxlength="45" minlength="2">
+    <input type="text" name="english_word" id="english_word" required maxlength="{{ max_english }}" minlength="2">
     <br>
-    <h5>Description</h5>
-    <input type="text" name="definition" id="definition" required maxlength="500" minlength="2">
+    <h5>Definition</h5>
+    <input type="text" name="definition" id="definition" required maxlength="{{ max_definition }}" minlength="2">
     <br>
     <h5>Image File</h5>
     <input type="file" name="image_file" id="image_file" required>
