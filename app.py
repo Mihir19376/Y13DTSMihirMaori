@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 # ---Setting up the App---
-DATABASE = "maoridictionary.db" # Assign dictionary db path to variable for connection reference late on.
+DATABASE = "maoridictionary.db"  # Assign dictionary db path to variable for connection reference late on.
 app = Flask(__name__)  # Initialise the Flask app.
 bcrypt = Bcrypt(app)  # Initialise the encryption app.
 app.secret_key = "ueuywq9571"  # Secret De/Encryption Key for scrambling the passwords.
@@ -20,8 +20,10 @@ LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # The year level meant for each word.
 TEACHER_USER_TYPE = 2  # Setting the user type for the teacher to the number 2 to correlate with the number in the db
 STUDENT_USER_TYPE = 1  # Setting the user type for the student to the number 1 to correlate with the number in the db
 
-PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"  # password requirements - must have 1 lowercase, 1 uppercase, and one number
-USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"  # user_name requirements - cant have any speacial characters except for "-" and "'"
+PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"  # password requirements - must have 1
+# lowercase, 1 uppercase, and one number
+USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"  # user_name requirements -
+# cant have any special characters except for "-" and "'" and "." and " "
 
 # ---User Input Boundary Constraints---
 MINIMUM_CHARS = 2  # The minimum input across all inputs.
@@ -36,6 +38,9 @@ MAX_CATEGORY_CHARS = 45  # Maximum characters for a category name
 MIN_PASSWORD_CHARS = 8  # Minimum amount of characters in a password.
 
 
+# ---Functions---
+
+
 def redirect_and_flash(redirect_url, flash_message):
     """
     The redirect_and_flash function will redirect the site to the given url and flash a message that the html will pick
@@ -44,18 +49,8 @@ def redirect_and_flash(redirect_url, flash_message):
     :param flash_message: The message string you wish to display once they are redirected
     :return: a redirect statement that redirects the site to the given url
     """
-    flash(flash_message)
-    return redirect(redirect_url)
-
-def get_all_categories():
-    query = "SELECT id, category FROM categories"
-    con = open_database(DATABASE)
-    cur = con.cursor()
-    cur.execute(query)
-    category_list = cur.fetchall()
-    # category_list = [category[0] for category in category_list]
-    con.close()
-    return category_list
+    flash(flash_message)  # this will send the message out and the base.html will pick it up and display it
+    return redirect(redirect_url)  # this will redirect the website to the given url
 
 
 def check_log_in_status():
@@ -77,123 +72,183 @@ def check_log_in_status():
 
 
 def open_database(db_name):
-    try:
-        connection = sqlite3.connect(db_name)
-        return connection
-    except Error as e:
-        print(e)
-    return None
+    """
+    the open_database function will create a connection with the sqlite3 database it is provided with.
+    :param db_name: The name of the database you want to access and make a connection to
+    :return: The connection to the database
+    """
+    try:  # Try making a connection
+        connection = sqlite3.connect(db_name)  # Create a connection with the sqlite3 db
+        return connection  # return said connection
+    except Error as e:  # if the connection doesn't occur, store the error as e
+        print(e)  # and print the error
+    return None  # If the function gets up to here, then there was no connection made, and it will return None
 
 
 def db_fetch_or_commit(query_string, query_parameters, push):
-    con = open_database(DATABASE)
-    cur = con.cursor()
-    if not query_parameters:
-        cur.execute(query_string)
-    else:
-        cur.execute(query_string, (query_parameters))
+    """
+    this function will commit or fetch from the database
+    :param query_string: this string is the SQL query you wish to execute.
+    :param query_parameters: This tuple is the values to enter into SQL query if there are some.
+    :param push: This is a boolean that states whether this is a push (commit) or not (fetch)
+    :return: The list of fetched times (if this is a fetch)
+    """
+    con = open_database(DATABASE)  # store the connection with the database in a variable
+    cur = con.cursor()  # the cursor is what can edit and view the db, and we store the curser in a variable.
+    if not query_parameters:  # if there is no query parameters provided, then it will:
+        cur.execute(query_string)  # just execute the string.
+        print("monkey")
+    else:  # But if there are parameters:
+        cur.execute(query_string, query_parameters)  # it'll execute the code with thew parameters as well
 
-    if not push:
-        data = cur.fetchall()
+    if not push:  # if the query is not a push query, then it'll fetch the data and return it
+        data = cur.fetchall()  # fetch the data from the cursor
         con.close()
-        return data
-    else:
+        return data  # and return it
+    else:  # but if it is a push statement, it'll commit it
         con.commit()
         con.close()
 
 
+def get_all_categories():
+    """
+    This will fetch all the categories in the db
+    :return: the list of all the categories
+    """
+    # this will fetch all the category names and their id's from the categories table
+    query = "SELECT id, category FROM categories"
+    category_list = db_fetch_or_commit(query, None, False)
+    return category_list
+
+
+# ---App Routes and their associated functions---
+
+
 @app.route('/delete-word', methods=['POST', 'GET'])
 def delete_word():
+    """
+    This function deletes a given word from the db and their image from the files
+    """
+    # if the second boolean is false, then they aren't a teacher and will be warned and redirected home
     if not check_log_in_status()[1]:
         redirect_and_flash('/', 'Need to be logged in as teacher!')
+    # if the method that the app route was entered in was because of post:
     if request.method == 'POST':
         print(request.form)
-        id = request.form.get('deletion_id')
+        deletion_id = request.form.get('deletion_id')  # retrieve the id to be deleted from the form
+        # delete the row with the deletion id
         query = "DELETE FROM words WHERE id = ?"
-        db_fetch_or_commit(query, (id,), True)
-        flash("Word Deleted")
-        return redirect('/')
-    elif request.method == 'GET':
+        db_fetch_or_commit(query, (deletion_id,), True)
+        return redirect_and_flash('/', 'Word Deleted')
+    elif request.method == 'GET':  # if the method was a get (url entered manually):
         return redirect_and_flash('/', 'Cant enter URL manually!')
 
 
 @app.route('/edit-word', methods=['POST', 'GET'])
 def edit_word():
+    """
+    This function edits all the credentials of a given word
+    """
+    # if the second boolean is false, then they aren't a teacher and will be warned and redirected home
     if not check_log_in_status()[1]:
         return redirect_and_flash('/', "Need to be logged in as teacher!")
-
     if request.method == 'POST':
         print(request.form)
-        old_image = request.form.get('previous_img_src')
-        word_id = request.form.get('id')
-        maori_word = request.form.get('maori_word')  #
-        english_word = request.form.get('english_word')  #
-        definition = request.form.get('definition')  #
-        year_level = request.form.get('level_id')  #
-        category = request.form.get('cat_id')
-        author = session.get("user_id")  #
-        time_of_entry = datetime.now()  #
-        file = request.files['image_file']
-        image_src = secure_filename(file.filename)  #
+        # retrieve the [] from the submitted form by searching for their ids
+        old_image = request.form.get('previous_img_src')  # [the old images file name]
+        word_id = request.form.get('id')  # [the id of the word]
+        maori_word = request.form.get('maori_word')  # [the words maori name]
+        english_word = request.form.get('english_word')  # [the words english name]
+        definition = request.form.get('definition')  # [the definition]
+        year_level = request.form.get('level_id')  # [the year level]
+        category_id = request.form.get('cat_id')  # [the category id]
 
-        query = f"SELECT * FROM words WHERE maori_name = ? AND english_name = ? AND NOT id = ?"
+        author = session.get("user_id")  # retrieve the id of the user who edited by checking the session credentials
+
+        time_of_entry = datetime.now()  # retrieve the current date and time
+
+        file = request.files['image_file']  # retrieve the file form the form
+        image_src = secure_filename(file.filename)  # retrieve the image name/src from the file
+
+        # fetch all the rows from the words table that name this maori&english name but doesn't have the current id
+        query = "SELECT * FROM words WHERE maori_name = ? AND english_name = ? AND NOT id = ?"
+        # convert the list into a boolean, if the list is empty is will be False and vice versa
         word_already_exits = bool(db_fetch_or_commit(query, (maori_word, english_word, word_id), False))
 
+        # if there isn't data in the list then that means there aren't any duplicates.
         if not word_already_exits:
-            query = "UPDATE words SET maori_name = ?, english_name = ?, definition = ?, last_edit_time = ?, author_of_entry = ?, year_level = ?, category = ? WHERE id = ?"
-            db_fetch_or_commit(query, (maori_word, english_word, definition, time_of_entry, author, year_level, category, word_id,), True)
+            # Update all but the img source with the new ones retrieved.
+            query = "UPDATE words SET maori_name = ?, english_name = ?, definition = ?, last_edit_time = ?, " \
+                    "author_of_entry = ?, year_level = ?, category = ? WHERE id = ?"
+            db_fetch_or_commit(query, (
+                maori_word, english_word, definition, time_of_entry, author, year_level, category_id, word_id,), True)
 
-            if image_src == "":
+            # if the new image source doesn't contain anything, then redirect them back to the word.
+            if not image_src:
                 return redirect_and_flash(f'/words/{word_id}', 'Updated!')
-            else:
+            else:  # but if it does contain something then:
                 print(image_src)
-                file.save(os.path.join(app.config['UPLOAD'], image_src))
+                if old_image != "no-image-available.png" and old_image != '':  # if the old image wasn't these two then:
+                    os.remove(f'static/images/{old_image}')  # delete it
+                file.save(os.path.join(app.config['UPLOAD'], image_src))  # save the new image file to the images folder
+                # Update the image source of the word
                 query = "UPDATE words SET img_src = ? WHERE id = ?"
                 db_fetch_or_commit(query, (image_src, word_id,), True)
-                if old_image != "no-image-available.png" and old_image != '':
-                    os.remove(f'static/images/{old_image}')
+
                 return redirect_and_flash(f'/words/{word_id}', 'Updated!')
-        else:
+        else:  # if this si duplicate:
             return redirect_and_flash('/', 'This word with the same meaning already exits!')
-    elif request.method == 'GET':
+    elif request.method == 'GET':  # if they entered this url in manually:
         return redirect_and_flash('/', 'Cant enter URL manually!')
 
 
 @app.route('/')
-def render_home():  # put application's code here
+def render_home():
+    """
+    Render the homepage...
+    """
     return render_template('home.html', logged_in=check_log_in_status(), category_list=get_all_categories())
 
 
 @app.route("/search", methods=["GET", "POST"])
 def render_search():
+    """
+     the search function displays the words the user searches for
+    """
     if request.method == 'POST':
         print(request.form)
-        search = request.form.get('ghgh').strip()
-        query = "SELECT id, maori_name, english_name, definition, img_src, category FROM words WHERE maori_name like ? or english_name like ?"
-        search = "%" + search + "%"
+        search = request.form.get('search_query').strip()  # remove any trailing spaces from the search
+        search = "%" + search + "%"  # this is just to make sure that it recognises words with the word search properly
+        # fetch all but the author, year level, and category of the words that's have a maori or english name that is
+        # like the search
+        query = "SELECT id, maori_name, english_name, definition, img_src, category FROM words WHERE maori_name like " \
+                "? or english_name like ?"
         words = db_fetch_or_commit(query, (search, search,), False)
 
-        if not bool(words):
+        if not bool(words):  # if the list of words is empty then redirect the user back home and notify them
             return redirect_and_flash('/', f"There are no words related to {search.strip('%')}")
-        # this code has to use .lower() for the format so that it is in lowercase's like the file name is.
+        # display all the words if there were any
         return render_template("words-category.html", logged_in=check_log_in_status(), words=words,
                                category_list=get_all_categories())
-    elif request.method == 'GET':
+    elif request.method == 'GET':  # if they entered this url in manually:
         return redirect_and_flash('/', "Cant enter URL manually!")
 
 
 @app.route('/signup', methods=['POST', 'GET'])
 def render_signup():
-    if check_log_in_status()[0]:
+    """
+    the sign-up function signs up the user to the database/website
+    """
+    if check_log_in_status()[0]:  # if the first value of the lig in status is true then they are already logged in so:
         return redirect_and_flash('/', "You are already logged in!")
+
     if request.method == 'POST':
         print(request.form)
-        user_name = request.form.get('user_name').strip()
-        email = request.form.get('email_address').strip()
-        user_type = request.form['qualification']
-        password1 = request.form.get('password1')
-        password2 = request.form.get('password2')
-        # password1, password2 = request.form.get('password1', 'password2')
+        user_name = request.form.get('user_name').strip()  # get the users name and trip any trailing spaces
+        email = request.form.get('email_address').strip()  # same deal for the email
+        user_type = request.form['qualification']  # retrieve their qualification (teacher/student)
+        password1 = request.form.get('password1')  # retrieve the first password
+        password2 = request.form.get('password2')  # retrieve the second one
 
         if password1 != password2:
             return redirect_and_flash('/signup', 'Passwords do not match')
@@ -247,7 +302,8 @@ def render_login():
 
         return redirect_and_flash('/', 'Logged In!')
 
-    return render_template('login.html', logged_in=check_log_in_status(), category_list=get_all_categories(), min_password=MIN_PASSWORD_CHARS)
+    return render_template('login.html', logged_in=check_log_in_status(), category_list=get_all_categories(),
+                           min_password=MIN_PASSWORD_CHARS)
 
 
 @app.route('/logout')
@@ -263,7 +319,8 @@ def admin():
     if not check_log_in_status()[1]:
         return redirect_and_flash('/', "Need to be logged in as teacher!")
 
-    return render_template('admin.html', logged_in=check_log_in_status(), levels=LEVELS, categories=get_all_categories(),
+    return render_template('admin.html', logged_in=check_log_in_status(), levels=LEVELS,
+                           categories=get_all_categories(),
                            category_list=get_all_categories(), max_maori=MAX_MAORI_WORD_CHARS,
                            max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS)
 
@@ -326,8 +383,6 @@ def add_word():
         image_src = secure_filename(file.filename)  #
         file.save(os.path.join(app.config['UPLOAD'], image_src))
 
-
-
         # Make sure to check if file already exists and don't add the file if it does.
         author = session.get("user_id")
         time_of_entry = datetime.now()
@@ -336,7 +391,8 @@ def add_word():
         word_already_exits = db_fetch_or_commit(query, (maori_word, english_word), False)
 
         if not word_already_exits:
-            query = "INSERT INTO words (maori_name, english_name, definition, img_src, last_edit_time, author_of_entry, year_level, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            query = "INSERT INTO words (maori_name, english_name, definition, img_src, last_edit_time, " \
+                    "author_of_entry, year_level, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
             db_fetch_or_commit(query, (
                 maori_word, english_word, definition, image_src, time_of_entry, author, year_level, category_id), True)
         else:
@@ -351,7 +407,10 @@ def add_word():
 def render_word(word_id):
     if not check_log_in_status()[0]:
         return redirect_and_flash('/', "Need to be logged in as a teacher or student!")
-    query = "SELECT words.id, words.maori_name, words.english_name, words.definition, words.img_src, words.last_edit_time, users.name, words.year_level, words.category, categories.category FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON words.category=categories.id WHERE words.id = ?"
+    query = "SELECT words.id, words.maori_name, words.english_name, words.definition, words.img_src, " \
+            "words.last_edit_time, users.name, words.year_level, words.category, categories.category " \
+            "FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON " \
+            "words.category=categories.id WHERE words.id = ?"
 
     word_list = db_fetch_or_commit(query, (word_id,), False)
     print(word_list)
@@ -381,7 +440,7 @@ def render_category(category):
 @app.errorhandler(404)
 def page_not_found(e):
     print(e)
-    return render_template('404Error.html', logged_in=check_log_in_status()), 404
+    return render_template('404Error.html', logged_in=check_log_in_status(), category_list=get_all_categories()), 404
 
 
 if __name__ == '__main__':
