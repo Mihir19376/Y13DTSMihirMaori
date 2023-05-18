@@ -16,8 +16,11 @@
 			<h1>
 				Māori Dictionary
 			</h1>
+            <!-- retrieve the flashed messages -->
             {% with messages = get_flashed_messages() %}
+                <!-- if the messages exits (i.e. it is of some length), then:-->
                 {% if messages %}
+                    <!-- display all the messages as a paragraph-->
                     {% for message in messages %}
                         <p class="error-message">{{ message }}</p>
                     {% endfor %}
@@ -31,7 +34,6 @@
 		<nav>
 			<a href="/"><button type="button" style="float: left;">Home</button></a>
 
-            {% if logged_in[0] %}
 			<div class="dropdown" style="width: fit-content; float: left;">
 				<div class="dropdown-btn">
 					<button style="float: left;" class="categories-button">Categories</button>
@@ -45,7 +47,6 @@
 					</div>
 				</div>
 			</div>
-            {% endif %}
 
             {% if logged_in[0] %}
             <a href="/logout"><button type="button" style="float: right;">Logout</button></a>

@@ -3,9 +3,10 @@
 {% block main %}
 <div class="image">
     {% for info in word_list %}
+        <!-- if the info 4 which is the image, contains something then: -->
         {% if info[4]|length %}
             <img src="/static/images/{{ info[4] }}" alt="{{ info[4] }}">
-        {% else %}
+        {% else %}  <!-- but if it doesn't then just display the default image -->
             <img src="/static/images/no-image-available.png" alt="no-image-available.png">
         {% endif %}
     {% endfor %}

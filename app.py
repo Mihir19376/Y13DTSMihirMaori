@@ -1,3 +1,4 @@
+# Import the flask, sqlite, os, time, and file name libraries.
 from flask import Flask, render_template, redirect, request, session, flash
 from werkzeug.utils import secure_filename
 import sqlite3
@@ -5,6 +6,9 @@ from sqlite3 import Error
 from flask_bcrypt import Bcrypt
 import os
 from datetime import datetime
+
+# NOTE: all the confirmation messages is done in the html files in the form tags attributes. This is the same case for
+# the input validation, but the boundaries are fed from this backend python file through the jinja to the html tags
 
 # ---Setting up the App---
 DATABASE = "maoridictionary.db"  # Assign dictionary db path to variable for connection reference late on.
@@ -40,9 +44,7 @@ MAX_CATEGORY_CHARS = 45  # Maximum characters for a category name
 MIN_PASSWORD_CHARS = 8  # Minimum amount of characters in a password.
 
 
-# ---Functions---
-
-
+# ---Efficiency Functions Section---
 def redirect_and_flash(redirect_url, flash_message):
     """
     The redirect_and_flash function will redirect the site to the given url and flash a message that the html will pick
@@ -65,7 +67,7 @@ def check_log_in_status():
     """
     # If there is no email in their log in session then continue
     if session.get("email") is None:
-        print("not logged in")
+        print("Not logged in")
         return [False, False]  # return "Not logged in" & "Not Teacher"
     # If there is an email then continue:
     else:
@@ -99,7 +101,6 @@ def db_fetch_or_commit(query_string, query_parameters, push):
     cur = con.cursor()  # the cursor is what can edit and view the db, and we store the curser in a variable.
     if not query_parameters:  # if there is no query parameters provided, then it will:
         cur.execute(query_string)  # just execute the string.
-        print("monkey")
     else:  # But if there are parameters:
         cur.execute(query_string, query_parameters)  # it'll execute the code with thew parameters as well
 
@@ -123,8 +124,7 @@ def get_all_categories():
     return category_list
 
 
-# ---App Routes and their associated functions---
-
+# ---Home & Admin Section---
 @app.route('/')
 def render_home():
     """
@@ -133,6 +133,22 @@ def render_home():
     return render_template('home.html', logged_in=check_log_in_status(), category_list=get_all_categories())
 
 
+@app.route('/admin')
+def admin():
+    """
+    This function renders the admin page
+    """
+    if not check_log_in_status()[1]:  # if they aren't logged in as a teacher:
+        return redirect_and_flash('/', "Need to be logged in as teacher!")
+
+    return render_template('admin.html', logged_in=check_log_in_status(), levels=LEVELS,
+                           categories=get_all_categories(),
+                           category_list=get_all_categories(), max_maori=MAX_MAORI_WORD_CHARS,
+                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS,
+                           word_regex=WORD_REGEX_REQUIREMENTS)
+
+
+# ---Deleting/Editing Words Section---
 @app.route('/delete-word', methods=['POST', 'GET'])
 def delete_word():
     """
@@ -146,10 +162,10 @@ def delete_word():
         print(request.form)
         deletion_id = request.form.get('deletion_id')  # retrieve the id to be deleted from the form
 
-        # delete the image of the word
+        # delete the image of the word with this id
         query = "SELECT img_src FROM words where id = ?"
-        image_to_delete = db_fetch_or_commit(query, (deletion_id, ), False)[0][0]
-        # os.remove(f'static/images/{image_to_delete}')  # delete it
+        image_to_delete = db_fetch_or_commit(query, (deletion_id,), False)[0][0]
+        os.remove(f'static/images/{image_to_delete}')  # delete it
 
         # delete the row with the deletion id
         query = "DELETE FROM words WHERE id = ?"
@@ -203,10 +219,10 @@ def edit_word():
             if not image_src:
                 return redirect_and_flash(f'/words/{word_id}', 'Updated!')
             else:  # but if it does contain something then:
-                print(image_src)
                 if old_image != "no-image-available.png" and old_image != '':  # if the old image wasn't these two then:
                     os.remove(f'static/images/{old_image}')  # delete it
-                image_file.save(os.path.join(app.config['UPLOAD'], image_src))  # save the new image file to the images folder
+                image_file.save(
+                    os.path.join(app.config['UPLOAD'], image_src))  # save the new image file to the images folder
                 # Update the image source of the word
                 query = "UPDATE words SET img_src = ? WHERE id = ?"
                 db_fetch_or_commit(query, (image_src, word_id,), True)
@@ -218,6 +234,7 @@ def edit_word():
         return redirect_and_flash('/', 'Cant enter URL manually!')
 
 
+# ---Searching Section---
 @app.route("/search", methods=["GET", "POST"])
 def render_search():
     """
@@ -231,17 +248,18 @@ def render_search():
         # like the search
         query = "SELECT id, maori_name, english_name, definition, img_src, category FROM words WHERE maori_name like " \
                 "? or english_name like ?"
-        words = db_fetch_or_commit(query, (search, search,), False)
+        words_list = db_fetch_or_commit(query, (search, search,), False)
 
-        if not bool(words):  # if the list of words is empty then redirect the user back home and notify them
+        if not bool(words_list):  # if the list of words is empty then redirect the user back home and notify them
             return redirect_and_flash('/', f"There are no words related to {search.strip('%')}")
         # display all the words if there were any
-        return render_template("words-category.html", logged_in=check_log_in_status(), words=words,
+        return render_template("words-category.html", logged_in=check_log_in_status(), words=words_list,
                                category_list=get_all_categories())
     elif request.method == 'GET':  # if they entered this url in manually:
         return redirect_and_flash('/', "Cant enter URL manually!")
 
 
+# ---Sign Up/Out/In Section---
 @app.route('/signup', methods=['POST', 'GET'])
 def render_signup():
     """
@@ -331,20 +349,7 @@ def logout():
     return redirect_and_flash('/', "See you next time!")
 
 
-@app.route('/admin')
-def admin():
-    """
-    This function renders the admin page
-    """
-    if not check_log_in_status()[1]:  # if they aren't logged in as a teacher:
-        return redirect_and_flash('/', "Need to be logged in as teacher!")
-
-    return render_template('admin.html', logged_in=check_log_in_status(), levels=LEVELS,
-                           categories=get_all_categories(),
-                           category_list=get_all_categories(), max_maori=MAX_MAORI_WORD_CHARS,
-                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS, word_regex=WORD_REGEX_REQUIREMENTS)
-
-
+# ---Delete Category Section---
 @app.route('/delete-category', methods=['POST', 'GET'])
 def delete_category():
     """
@@ -372,6 +377,7 @@ def delete_category():
     return redirect_and_flash('/admin', f'{category_to_delete} Category Deleted!')
 
 
+# ---Add Category/Word Section---
 @app.route('/add-category', methods=['POST', 'GET'])
 def add_category():
     """
@@ -442,6 +448,7 @@ def add_word():
         return redirect_and_flash('/', "Cant enter URL manually!")
 
 
+# ---Display Word/Category Section---
 @app.route('/words/<word_id>')
 def render_word(word_id):
     """
@@ -449,8 +456,8 @@ def render_word(word_id):
     :param word_id:
     :return:
     """
-    if not check_log_in_status()[0]:  # if not logged in at all, then:
-        return redirect_and_flash('/', "Need to be logged in as a teacher or student!")
+    # if not check_log_in_status()[0]:  # if not logged in at all, then:
+    #     return redirect_and_flash('/', "Need to be logged in as a teacher or student!")
 
     # fetch the words: all the words credentials and the name of the users correlated with the author id, and category
     # name correlated with the cat id.
@@ -458,21 +465,22 @@ def render_word(word_id):
             "words.last_edit_time, users.name, words.year_level, words.category, categories.category " \
             "FROM words INNER JOIN users ON words.author_of_entry=users.id INNER JOIN categories ON " \
             "words.category=categories.id WHERE words.id = ?"
-    word_list = db_fetch_or_commit(query, (word_id,), False)
-    print(word_list)
+    words_list = db_fetch_or_commit(query, (word_id,), False)
+    print(words_list)
 
-    if not bool(word_list):  # if the list is emtpy then:
+    if not bool(words_list):  # if the list is emtpy then:
         return redirect_and_flash('/', "That word doesn't exist!")
 
     return render_template('word.html', logged_in=check_log_in_status(), category_list=get_all_categories(),
-                           word_list=word_list, levels=LEVELS, max_maori=MAX_MAORI_WORD_CHARS,
-                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS, word_regex=WORD_REGEX_REQUIREMENTS)
+                           word_list=words_list, levels=LEVELS, max_maori=MAX_MAORI_WORD_CHARS,
+                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS,
+                           word_regex=WORD_REGEX_REQUIREMENTS)
 
 
 @app.route('/categories/<category>/')
 def render_category(category):
-    if not check_log_in_status()[0]:  # if not logged in at all, then:
-        return redirect_and_flash('/', "Need to be logged in as a teacher or student!")
+    # if not check_log_in_status()[0]:  # if not logged in at all, then:
+    #     return redirect_and_flash('/', "Need to be logged in as a teacher or student!")
 
     # select the all but the edit time, author, year leve, and category from the words table given the given category
     query = "SELECT id, maori_name, english_name, definition, img_src FROM words where category = ?"
@@ -481,7 +489,7 @@ def render_category(category):
 
     # select the category that this url is viewing
     query = "SELECT category FROM categories WHERE id = ?"
-    selected_cat = db_fetch_or_commit(query, (category, ), False)
+    selected_cat = db_fetch_or_commit(query, (category,), False)
 
     if not bool(words_list):  # if there are no words in that category
         return redirect_and_flash('/', "This category doesnt have anything to view in it yet")
@@ -490,6 +498,7 @@ def render_category(category):
                            category_list=get_all_categories(), selected_cat=selected_cat[0][0])
 
 
+# ---Error Handler Section---
 @app.errorhandler(404)
 def page_not_found(e):
     """

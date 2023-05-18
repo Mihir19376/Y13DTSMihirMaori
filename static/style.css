@@ -171,10 +171,9 @@ span{
 @media (prefers-color-scheme: dark) {
     :root {
         --fontcolour: #fff;
-
-        --backcolour: #161b22;
-        --shadowcolour: #13171d;
-        --maincolour: #191f27;
+        --backcolour: #171b21;
+        --shadowcolour: #0f1216;
+        --maincolour: #1f242c;
     }
 }
 
