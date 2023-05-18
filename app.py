@@ -24,6 +24,8 @@ PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"  # passwor
 # lowercase, 1 uppercase, and one number
 USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"  # user_name requirements -
 # cant have any special characters except for "-" and "'" and "." and " "
+WORD_REGEX_REQUIREMENTS = "^[a-zA-Z\s'-]+$"  # The word cannot have any special characters or numbers bar the '-', ' ',
+# and '''
 
 # ---User Input Boundary Constraints---
 MINIMUM_CHARS = 2  # The minimum input across all inputs.
@@ -123,6 +125,13 @@ def get_all_categories():
 
 # ---App Routes and their associated functions---
 
+@app.route('/')
+def render_home():
+    """
+    Render the homepage...
+    """
+    return render_template('home.html', logged_in=check_log_in_status(), category_list=get_all_categories())
+
 
 @app.route('/delete-word', methods=['POST', 'GET'])
 def delete_word():
@@ -136,9 +145,16 @@ def delete_word():
     if request.method == 'POST':
         print(request.form)
         deletion_id = request.form.get('deletion_id')  # retrieve the id to be deleted from the form
+
+        # delete the image of the word
+        query = "SELECT img_src FROM words where id = ?"
+        image_to_delete = db_fetch_or_commit(query, (deletion_id, ), False)[0][0]
+        # os.remove(f'static/images/{image_to_delete}')  # delete it
+
         # delete the row with the deletion id
         query = "DELETE FROM words WHERE id = ?"
         db_fetch_or_commit(query, (deletion_id,), True)
+
         return redirect_and_flash('/', 'Word Deleted')
     elif request.method == 'GET':  # if the method was a get (url entered manually):
         return redirect_and_flash('/', 'Cant enter URL manually!')
@@ -200,14 +216,6 @@ def edit_word():
             return redirect_and_flash('/', 'This word with the same meaning already exits!')
     elif request.method == 'GET':  # if they entered this url in manually:
         return redirect_and_flash('/', 'Cant enter URL manually!')
-
-
-@app.route('/')
-def render_home():
-    """
-    Render the homepage...
-    """
-    return render_template('home.html', logged_in=check_log_in_status(), category_list=get_all_categories())
 
 
 @app.route("/search", methods=["GET", "POST"])
@@ -334,7 +342,7 @@ def admin():
     return render_template('admin.html', logged_in=check_log_in_status(), levels=LEVELS,
                            categories=get_all_categories(),
                            category_list=get_all_categories(), max_maori=MAX_MAORI_WORD_CHARS,
-                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS)
+                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS, word_regex=WORD_REGEX_REQUIREMENTS)
 
 
 @app.route('/delete-category', methods=['POST', 'GET'])
@@ -458,7 +466,7 @@ def render_word(word_id):
 
     return render_template('word.html', logged_in=check_log_in_status(), category_list=get_all_categories(),
                            word_list=word_list, levels=LEVELS, max_maori=MAX_MAORI_WORD_CHARS,
-                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS)
+                           max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS, word_regex=WORD_REGEX_REQUIREMENTS)
 
 
 @app.route('/categories/<category>/')
@@ -471,11 +479,15 @@ def render_category(category):
     words_list = db_fetch_or_commit(query, (category,), False)
     print(words_list)
 
+    # select the category that this url is viewing
+    query = "SELECT category FROM categories WHERE id = ?"
+    selected_cat = db_fetch_or_commit(query, (category, ), False)
+
     if not bool(words_list):  # if there are no words in that category
         return redirect_and_flash('/', "This category doesnt have anything to view in it yet")
 
     return render_template('words-category.html', logged_in=check_log_in_status(), words=words_list,
-                           category_list=get_all_categories())
+                           category_list=get_all_categories(), selected_cat=selected_cat[0][0])
 
 
 @app.errorhandler(404)

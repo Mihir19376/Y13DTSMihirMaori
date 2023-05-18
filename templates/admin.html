@@ -5,10 +5,10 @@
 <h1>Add Word</h1>
 <form method="post" action="/add-word" enctype="multipart/form-data" onsubmit="return confirm('Do you really want to add this word?');">
     <h5>Maori Word</h5>
-    <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="{{ max_maori }}">
+    <input type="text" name="maori_word" id="maori_word" required minlength="2" maxlength="{{ max_maori }}" pattern="{{ word_regex }}" title="The word cannot have any special characters or numbers bar the '-', ' ', and '''">
     <br>
     <h5>English Translation</h5>
-    <input type="text" name="english_word" id="english_word" required maxlength="{{ max_english }}" minlength="2">
+    <input type="text" name="english_word" id="english_word" required maxlength="{{ max_english }}" minlength="2"  pattern="{{ word_regex }}" title="The word cannot have any special characters or numbers bar the '-', ' ', and '''">
     <br>
     <h5>Definition</h5>
     <input type="text" name="definition" id="definition" required maxlength="{{ max_definition }}" minlength="2">
