@@ -37,7 +37,7 @@
     <h1>Add Category</h1>
     <form method="post" action="/add-category" onsubmit="return confirm('Do you really want to add this category?');">
         <h5>Category Name</h5>
-        <input type="text" name="category_name" id="category_name" required minlength="2" maxlength="45">
+        <input type="text" name="category_name" id="category_name" required minlength="2" maxlength="{{ max_cat }}" pattern="{{ word_regex }}" title="The word cannot have any special characters or numbers bar the '-', ' ', and '''">
         <br>
         <div class="error">{{ error }}</div>
         <input type="submit" value="Add">

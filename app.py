@@ -28,7 +28,7 @@ PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"  # passwor
 # lowercase, 1 uppercase, and one number
 USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"  # user_name requirements -
 # cant have any special characters except for "-" and "'" and "." and " "
-WORD_REGEX_REQUIREMENTS = "^[a-zA-Z\s'-]+$"  # The word cannot have any special characters or numbers bar the '-', ' ',
+WORD_AND_CAT_REGEX_REQUIREMENTS = "^[a-zA-Z\s'-]+$"  # The word cannot have any special characters or numbers bar the '-', ' ',
 # and '''
 
 # ---User Input Boundary Constraints---
@@ -144,7 +144,7 @@ def admin():
                            categories=get_all_categories(),
                            category_list=get_all_categories(), max_maori=MAX_MAORI_WORD_CHARS,
                            max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS,
-                           word_regex=WORD_REGEX_REQUIREMENTS)
+                           word_regex=WORD_AND_CAT_REGEX_REQUIREMENTS, max_cat=MAX_CATEGORY_CHARS)
 
 
 # ---Deleting/Editing Words Section---
@@ -474,7 +474,7 @@ def render_word(word_id):
     return render_template('word.html', logged_in=check_log_in_status(), category_list=get_all_categories(),
                            word_list=words_list, levels=LEVELS, max_maori=MAX_MAORI_WORD_CHARS,
                            max_english=MAX_ENGLISH_WORD_CHARS, max_definition=MAX_DEFINITION_CHARS,
-                           word_regex=WORD_REGEX_REQUIREMENTS)
+                           word_regex=WORD_AND_CAT_REGEX_REQUIREMENTS)
 
 
 @app.route('/categories/<category>/')
