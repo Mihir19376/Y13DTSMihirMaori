@@ -7,9 +7,10 @@
     <div class="container">
     <a href="/words/{{ word[0] }}">
         <div class="content-box">
+            <!-- if the info 4 which is the image, contains something then: -->
             {% if word[4]|length %}
                 <img src="/static/images/{{ word[4] }}" alt="{{ word[4]}}">
-            {% else %}
+            {% else %} <!-- but if it doesn't then just display the default image -->
                 <img src="/static/images/no-image-available.png" alt="no-image-available.png">
             {% endif %}
             <h5>{{ word[1] }}</h5>

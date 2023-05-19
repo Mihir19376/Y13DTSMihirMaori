@@ -8,21 +8,21 @@ import os
 from datetime import datetime
 
 # NOTE: all the confirmation messages is done in the html files in the form tags attributes. This is the same case for
-# the input validation, but the boundaries are fed from this backend python file through the jinja to the html tags
+# the input validation, but the boundaries are fed from this backend python file through the jinja to the html tags.
 
 # ---Setting up the App---
 DATABASE = "maoridictionary.db"  # Assign dictionary db path to variable for connection reference late on.
-app = Flask(__name__)  # Initialise the Flask app.
-bcrypt = Bcrypt(app)  # Initialise the encryption app.
-app.secret_key = "ueuywq9571"  # Secret De/Encryption Key for scrambling the passwords.
+app = Flask(__name__)  # Initialise and set up the Flask app.
+bcrypt = Bcrypt(app)  # Initialise and set up the encryption app.
+app.secret_key = "ueuywq9571"  # Secret De/Encryption Key for un/scrambling the passwords.
 upload = 'static/images'  # File path to the folder where to upload and store the words reference images.
-app.config['UPLOAD'] = upload  # Setting the upload destination that my program uses to the upload file path.
+app.config['UPLOAD'] = upload  # Setting the upload destination that my app uses to the upload file path.
 
 # ---Constants---
 LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # The year level meant for each word.
 
-TEACHER_USER_TYPE = 2  # Setting the user type for the teacher to the number 2 to correlate with the number in the db
-STUDENT_USER_TYPE = 1  # Setting the user type for the student to the number 1 to correlate with the number in the db
+TEACHER_USER_TYPE = 2  # Setting the user type for the teacher to the number 2 which is fed in the html when signing up
+STUDENT_USER_TYPE = 1  # Setting the user type for the student to the number 1 which is fed in the html when signing up
 
 PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"  # password requirements - must have 1
 # lowercase, 1 uppercase, and one number
@@ -36,7 +36,6 @@ MINIMUM_CHARS = 2  # The minimum input across all inputs.
 MAX_MAORI_WORD_CHARS = 89  # Maximum characters for a Maori Word.
 MAX_ENGLISH_WORD_CHARS = 45  # Maximum characters for an English Word.
 MAX_DEFINITION_CHARS = 500  # Maximum characters for a definition.
-MAX_IMAGE_SOURCE_CHARS = 60  # Maximum characters for an image source path.
 MAX_NAME_CHARS = 45  # Maximum characters for a users name.
 MAX_EMAIL_CHARS = 60  # Maximum characters for a users email address.
 MAX_PASSWORD_CHARS = 72  # Maximum characters for a password.
@@ -223,7 +222,7 @@ def edit_word():
                     os.remove(f'static/images/{old_image}')  # delete it
                 image_file.save(
                     os.path.join(app.config['UPLOAD'], image_src))  # save the new image file to the images folder
-                # Update the image source of the word
+                # Update the image source of the word with this id
                 query = "UPDATE words SET img_src = ? WHERE id = ?"
                 db_fetch_or_commit(query, (image_src, word_id,), True)
 
@@ -294,7 +293,8 @@ def render_signup():
 
     return render_template('signup.html', min_password=MIN_PASSWORD_CHARS, password_regex=PASSWORD_REGEX_REQUIREMENTS,
                            user_name_regex=USER_NAME_REGEX_REQUIREMENTS, logged_in=check_log_in_status(),
-                           category_list=get_all_categories(), max_email=MAX_EMAIL_CHARS, max_name=MAX_NAME_CHARS)
+                           category_list=get_all_categories(), max_email=MAX_EMAIL_CHARS, max_name=MAX_NAME_CHARS,
+                           teacher_value=TEACHER_USER_TYPE, student_value=STUDENT_USER_TYPE)
 
 
 @app.route('/login', methods=["POST", "GET"])
@@ -374,7 +374,7 @@ def delete_category():
     query = "DELETE FROM categories WHERE id = ?"
     db_fetch_or_commit(query, (category_to_delete,), True)
 
-    return redirect_and_flash('/admin', f'{category_to_delete} Category Deleted!')
+    return redirect_and_flash('/admin', 'Category Deleted!')
 
 
 # ---Add Category/Word Section---
@@ -492,7 +492,7 @@ def render_category(category):
     selected_cat = db_fetch_or_commit(query, (category,), False)
 
     if not bool(words_list):  # if there are no words in that category
-        return redirect_and_flash('/', "This category doesnt have anything to view in it yet")
+        return redirect_and_flash('/', "This category doesnt have anything to view in it yet or it doesnt exist")
 
     return render_template('words-category.html', logged_in=check_log_in_status(), words=words_list,
                            category_list=get_all_categories(), selected_cat=selected_cat[0][0])

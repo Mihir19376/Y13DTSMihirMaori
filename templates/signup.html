@@ -9,8 +9,8 @@
     <input type="email" placeholder="example@example.com" name="email_address" id="email_address" required maxlength="{{ max_email }}">
     <br>
     <h5>Who are you ?</h5>
-    <input type="radio" name="qualification" id="student" value="1" required>
-    <input type="radio" name="qualification" id="teacher" value="2" required>
+    <input type="radio" name="qualification" id="student" value="{{ student_value }}" required>
+    <input type="radio" name="qualification" id="teacher" value="{{ teacher_value }}" required>
     <br>
     <h5>Password</h5>
     <input type="password" placeholder="Min of 8 characters" id="password1" name="password1" minlength="{{ min_password }}" required pattern="{{ password_regex }}" title="At least one uppercase, one lowercase, one digit, and at least 8 characters long">

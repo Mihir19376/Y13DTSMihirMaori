@@ -77,7 +77,7 @@ nav::after{
     clear: both;
     display: table;
 }
-
+/* Neumorphic test adapted from: https://codepen.io/agilk/pen/gObvBLe */
 span{
     text-align: center;
     font-size: 100px;
@@ -204,6 +204,7 @@ body main .grid-container .container:hover{
     margin-bottom: 10px;
 }
 
+/*Code to make the cards look variable*/
 .grid-container .container:nth-child(1n){
     grid-column: span 1;
     grid-row: span 1;
