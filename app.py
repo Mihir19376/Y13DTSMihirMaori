@@ -28,8 +28,8 @@ PASSWORD_REGEX_REQUIREMENTS = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*$"  # passwor
 # lowercase, 1 uppercase, and one number
 USER_NAME_REGEX_REQUIREMENTS = "^[\w'\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\]]{2,}$"  # user_name requirements -
 # cant have any special characters except for "-" and "'" and "." and " "
-WORD_AND_CAT_REGEX_REQUIREMENTS = "^[a-zA-Z\s'-]+$"  # The word cannot have any special characters or numbers bar the '-', ' ',
-# and '''
+WORD_AND_CAT_REGEX_REQUIREMENTS = "^[a-zA-Z\s'-]+$"  # The word cannot have any special characters or numbers bar the
+# '-', ' ', and '''
 
 # ---User Input Boundary Constraints---
 MINIMUM_CHARS = 2  # The minimum input across all inputs.
